@@ -195,7 +195,7 @@ class CORAL_model(nn.Module):
         return v, v_m, v_logvar
 
 
-    def forward(self, batch):
+    def forward(self, batch,, device):
         """
         batch: subgraph for each cell
         """
@@ -229,7 +229,7 @@ class CORAL_model(nn.Module):
         #mu = torch.clamp(mu, min=1e-4, max=1e6)
         #theta = torch.clamp(theta, min=1e-4, max=1e4)
         
-        q_xi_dist = NegBinom(mu, theta)
+        q_xi_dist = NegBinom(mu, theta, device)
         q_xi = q_xi_dist.sample()
         
         x_combined = torch.cat((q_xi, codex_x), dim=1)

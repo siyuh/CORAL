@@ -112,7 +112,7 @@ def train_model(model, optimizer, dataloader, epochs=300,device='cpu'):
              # Compute edge weights for this specific batch
             #edge_weights = spatial_attention(edge_index, spatial_coords)
             
-            output = model(batch)
+            output = model(batch, device)
             
             codex_true = codex_true[center_cell]
             cell_type = cell_type[center_cell]
