@@ -11,47 +11,59 @@ Taking multimodality molecular profiles of unmatched spatial resolution and dete
 `pip install git+https://github.com/zou-group/CORAL`
 
 
-### Model Input:
-h5ad file with info: 
-- Single-cell count matrix
-- Meta data
-- (optional) additional drug compounds
+### Model Input (h5ad format):
+- A hires adata 
+- A lowres adata
+- (optional) the major cell type annotation on hires adata
+- (optional) ground truth adata
+  
+### Accepting spatial omics data 
+- spatial transcriptics
+- spatial proteomics
+- spatial metabolics
+- spatial ATAC
 
 ### Features 
-- Predicting single-cell transcriptomics upon drug treatments 
-- Predicting cell differentiation 
-- Predicting gene perturbation
+- Incorporating the scale-invariant feature transform (SIFT) to align the adjacent slides 
+- Generating joint single-cell embedding with two data modalities 
+- Deconvolves the lower-resolution modality to higy-resolution
+- Inferring spatial niches
+- Prediciting spatial variables
+- Predicting interations between neighboring cells
 
-### Training Squidiff
-```
-python train_squidiff.py --logger_path LOGGER_FIRE_NAME --data_path YOUR_ADATASET.h5ad --resume_checkpoint ptNAME --gene_size 500 --output_dim 500
-```
-For incorporating drug structure in training, see the example: 
-```
-python train_squidiff.py --logger_path logger_files/logger_sciplex_random_split_0 --data_path datasets/sci_plex_train_random_split_0.h5ad --resume_checkpoint sciplex_results_random_split_0 --use_drug_structure True --gene_size 200 --output_dim 200 --control_data_path datasets/sci_plex_train_random_split_0_control.h5ad
-```
-### Sample Squidiff
-```python
-sampler = sample_squidiff.sampler(
-    model_path = 'simu_results/model.pt',
-    gene_size = 100,
-    output_dim = 100,
-    use_drug_structure = False
-)
 
-test_adata_scrna = sc.read_h5ad('datasets/sc_simu_test.h5ad')
-z_sem_scrna = sampler.model.encoder(torch.tensor(test_adata_scrna.X).to('cuda'))
+### simple core implementation
+```
+import coral
+combined_expr, hires_coords, one_hot_cell_types, spot_indices, lowres_expr = coral.utils.preprocess_data(lowres_adata, hires_adata)
+    
+dataloader = coral.utils.prepare_local_subgraphs(combined_expr, hires_coords, one_hot_cell_types, 
+                                           spot_indices, lowres_expr,n_neighbors=40)    
 
-scrnas_pred = sampler.pred(z_sem_scrna, gene_size = test_adata_scrna.shape[1])
+model, optimizer = coral.model.create_model(lowres_dim = lowres_adata.shape[1],
+                                            hires_dim = hires_adata.shape[1],
+                                            lowres_size = lowres_adata.shape[0],
+                                            hires_size = hires_adata.shape[0],
+                                            cell_type_dim=one_hot_cell_types.shape[1],                                          
+                                            latent_dim=64, 
+                                            hidden_channels=128, 
+                                            v_dim = 1
+                                          )
+coral.trainer.train_model(model, optimizer, dataloader, epochs = 100 ,device = device)
+adata_model_gener = coral.inference.generate_and_validate(model, dataloader,device, hires_adata)
+
 ```
 
 ### Tutorial
+ - CORAL provides semi-automated alignment using SIFT. If your spatial multi-omics data are not aligned, please check our [tutorial for alignment](https://github.com/zou-group/CORAL/blob/main/align_slides.ipynb)
+ - After the two input adata are prepared, please folowing our [basic tutorial](https://github.com/zou-group/CORAL/blob/main/coral_tutorial_basic.ipynb)
+ - For additional steps related to reproducing the results in the paper, please refer to our reproducibility repository: https://github.com/siyuh/CORAL_reproducibility
 
 
-### How to cite Squidiff
-
-bioRxiv: https://doi.org/10.1101/2024.11.16.623974
-
+### How to cite CORAL
+```
+bioRxiv: https://doi.org/10.1101/2025.02.01.636038
+```
 ## Contact
 In case you have questions, please contact:
 - Siyu He - siyuhe@stanford.edu
