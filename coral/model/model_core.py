@@ -195,7 +195,7 @@ class CORAL_model(nn.Module):
         return v, v_m, v_logvar
 
 
-    def forward(self, batch,, device):
+    def forward(self, batch, device):
         """
         batch: subgraph for each cell
         """
