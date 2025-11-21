@@ -1,9 +1,9 @@
-## CORAL: Multi-scale Multi-modal integration of Spatial Omics via Deep Generative Model
-
+<img src="coral_logo.png" width="80" /> CORAL: Multi-scale Multi-modal integration of Spatial Omics via Deep Generative Model
+---
 CORAL is a probabilistic, graph-based method designed to integrate diverse spatial omics datasets. 
 Taking multimodality molecular profiles of unmatched spatial resolution and detected features, CORAL generates single-cell embedding with information from both data modalities,  deconvolves the lower-resolution modality to infer its profile in individual cells, and predicts interactions between neighboring cells.
 
-<img src=figure/github_figure_1.png width="1000" />
+<img src=Coral_Figure1.png width="1000" />
 
 
 ### Installation
