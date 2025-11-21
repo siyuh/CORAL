@@ -7,7 +7,9 @@ Taking multimodality molecular profiles of unmatched spatial resolution and dete
 
 
 ### Installation
-`pip install CORAL`
+
+`pip install git+https://github.com/zou-group/CORAL`
+
 
 ### Model Input:
 h5ad file with info: 
