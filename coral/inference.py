@@ -79,7 +79,7 @@ def generate_and_validate(model, dataloader,device, hires_adata):
             spatial_coords = batch.spatial_coords
 
         
-            output = model(batch)
+            output = model(batch, device)
 
             
             center_cell_idx = batch.center_cell.nonzero(as_tuple=True)[0]

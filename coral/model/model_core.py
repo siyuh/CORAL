@@ -225,13 +225,31 @@ class CORAL_model(nn.Module):
         #print(self.px_r_sc)
         mu = torch.exp(visium_library) * deconv_x + self.eps
         theta = torch.exp(self.px_r_sc)
-        
+
         #mu = torch.clamp(mu, min=1e-4, max=1e6)
         #theta = torch.clamp(theta, min=1e-4, max=1e4)
         
-        q_xi_dist = NegBinom(mu, theta, device)
-        q_xi = q_xi_dist.sample()
-        
+        #q_xi_dist = NegBinom(mu, theta, device)
+        #q_xi = mu#q_xi_dist.sample()
+
+        var = mu + (mu * mu) / (theta + 1e-8)
+        q_xi = mu + torch.randn_like(mu) * torch.sqrt(var + 1e-8)
+        #q_xi = torch.clamp(q_xi, min=0.0)
+        q_xi = torch.nn.functional.softplus(q_xi) 
+
+        #q_samp = NegBinom(mu, theta, device).sample()   # discrete, best performance
+        #q_xi = (q_samp - mu).detach() + mu              # backward uses mu
+
+        #q_xi = Gamma(concentration=theta + self.eps, rate=(theta + self.eps)/(mu + self.eps)).rsample()
+        #if self.training:
+            #q_xi = mu
+        #    q_xi = Gamma(concentration=theta + self.eps, rate=(theta + self.eps)/(mu + self.eps)).rsample()
+        #else:
+        #    with torch.no_grad():
+        #        q_xi = NegBinom(mu, theta, device).sample()
+        #lambdas = Gamma(concentration=theta + self.eps, rate=(theta + self.eps)/(mu + self.eps)).rsample()
+        #q_xi = lambdas
+
         x_combined = torch.cat((q_xi, codex_x), dim=1)
         x_combined = torch.log1p(x_combined)
         

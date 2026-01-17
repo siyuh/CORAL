@@ -7,9 +7,33 @@ import numpy as np
 from torch.distributions import Distribution,constraints,  Normal, LogNormal,Gamma, Poisson, Categorical, kl_divergence as kl
 import random
 from torch_geometric.utils import to_dense_adj
-
+import torch.nn.functional as F
     
+def protein_rna_contrastive_loss(z_protein: torch.Tensor,
+                                 z_rna: torch.Tensor,
+                                 temperature: float = 0.1) -> torch.Tensor:
+    """
+    Symmetric InfoNCE contrastive loss between protein and RNA embeddings.
 
+    z_protein: (B, D)
+    z_rna:     (B, D)
+    """
+    # Normalize
+    z_protein = F.normalize(z_protein, dim=-1)
+    z_rna = F.normalize(z_rna, dim=-1)
+
+    # Similarity matrix (B, B)
+    logits = torch.matmul(z_protein, z_rna.t()) / temperature
+
+    batch_size = z_protein.size(0)
+    labels = torch.arange(batch_size, device=z_protein.device)
+
+    loss_i = F.cross_entropy(logits, labels)      # protein -> RNA
+    loss_j = F.cross_entropy(logits.t(), labels)  # RNA -> protein
+
+    loss = 0.5 * (loss_i + loss_j)
+    return loss
+    
 def diversity_loss(embeddings, spot_indices):
     unique_spots = torch.unique(spot_indices)
     loss = 0.0
@@ -91,7 +115,7 @@ class NegBinom(Distribution):
         return ll
     
 
-def train_model(model, optimizer, dataloader, epochs=300,device='cpu'):
+def train_model(model, optimizer, dataloader, epochs=300,device='cpu', prot_idx = None, gene_idx = None):
     
     model.to(device)
     scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.98)
@@ -118,6 +142,23 @@ def train_model(model, optimizer, dataloader, epochs=300,device='cpu'):
             cell_type = cell_type[center_cell]
             
             loss = loss_function(model, batch.spot_indices, visium_true, output, codex_true, cell_type, output['generated_cell_type'], output['z_mu'], output['z_logvar'],output['pxi_rate'], output['attn_weights_2'])
+
+
+            # ---- 2) Contrastive loss between matched protein/RNA markers ----
+            if prot_idx is not None and gene_idx is not None:
+                # assume batch has x_protein, x_rna as tensors
+                x_prot = output['py_rate'][:, prot_idx]   # (B, K)
+                x_rna  = output["q_xi"][:, gene_idx]       # (B, K')
+
+                # Only compute if shapes are valid & both modalities present
+                if x_prot.numel() > 0 and x_rna.numel() > 0:
+                    
+                    c_loss = protein_rna_contrastive_loss(
+                        x_prot, x_rna, temperature=0.1
+                    )
+                    loss = loss + 0.1 * c_loss      
+
+            
             
             optimizer.zero_grad()
             loss.backward()
