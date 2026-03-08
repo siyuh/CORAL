@@ -110,6 +110,7 @@ adata_model_gener = coral.inference.generate_and_validate(
 For scripts to reproduce all results in the paper, see the [CORAL reproducibility repository](https://github.com/siyuh/CORAL_reproducibility).
 
 ## Key Features
+<<<<<<< HEAD
 
 - **Scale-invariant feature transform (SIFT)** for semi-automated alignment of adjacent tissue slides
 - **Joint single-cell embeddings** that integrate information across modalities and resolutions
@@ -118,6 +119,16 @@ For scripts to reproduce all results in the paper, see the [CORAL reproducibilit
 - **Spatial variable prediction** across tissue regions
 - **Cell-cell interaction prediction** between neighboring cells
 
+=======
+
+- **Scale-invariant feature transform (SIFT)** for semi-automated alignment of adjacent tissue slides
+- **Joint single-cell embeddings** that integrate information across modalities and resolutions
+- **Deconvolution** of low-resolution modalities to single-cell resolution
+- **Spatial niche inference** from integrated embeddings
+- **Spatial variable prediction** across tissue regions
+- **Cell-cell interaction prediction** between neighboring cells
+
+>>>>>>> fabb3c7315190f6b30c4a3524fd4589fec82e28b
 ## Citation
 
 If you use CORAL in your research, please cite:
@@ -137,3 +148,7 @@ We welcome questions, feedback, and contributions!
 ## License
 
 This project is licensed under the [BSD 3-Clause License](LICENSE).
+<<<<<<< HEAD
+=======
+
+>>>>>>> fabb3c7315190f6b30c4a3524fd4589fec82e28b
