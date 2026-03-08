@@ -3,4 +3,3 @@ furo
 nbsphinx
 ipykernel
 sphinx-copybutton
-pypandoc-binary
