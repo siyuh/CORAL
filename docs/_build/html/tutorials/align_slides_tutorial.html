@@ -276,11 +276,11 @@
 <section id="Prerequisites">
 <h2>Prerequisites<a class="headerlink" href="#Prerequisites" title="Link to this heading">¶</a></h2>
 <p><strong>Dependencies:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>opencv-contrib-python<span class="w"> </span>numpy<span class="w"> </span>matplotlib<span class="w"> </span>scikit-image<span class="w"> </span>imageio<span class="w"> </span>tifffile<span class="w"> </span>pandas<span class="w"> </span>scipy
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>opencv-contrib-python<span class="w"> </span>numpy<span class="w"> </span>matplotlib<span class="w"> </span>scikit-image<span class="w"> </span>imageio<span class="w"> </span>tifffile<span class="w"> </span>imagecodecs<span class="w"> </span>pandas<span class="w"> </span>scipy
 </pre></div>
 </div>
 <blockquote>
-<div><p><strong>Note:</strong> <code class="docutils literal notranslate"><span class="pre">opencv-contrib-python</span></code> (not just <code class="docutils literal notranslate"><span class="pre">opencv-python</span></code>) is required for the <code class="docutils literal notranslate"><span class="pre">cv2.xfeatures2d.VGG_create</span></code> descriptor.</p>
+<div><p><strong>Note:</strong> <code class="docutils literal notranslate"><span class="pre">opencv-contrib-python</span></code> (not just <code class="docutils literal notranslate"><span class="pre">opencv-python</span></code>) is required for the <code class="docutils literal notranslate"><span class="pre">cv2.xfeatures2d.VGG_create</span></code> descriptor. <code class="docutils literal notranslate"><span class="pre">imagecodecs</span></code> is required for reading compressed TIFF files (e.g., LZW compression).</p>
 </div></blockquote>
 </section>
 <section id="Step-1:-Setup">
@@ -296,6 +296,7 @@
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">imageio.v2</span> <span class="k">as</span> <span class="nn">io</span>
 <span class="kn">import</span> <span class="nn">tifffile</span>
+<span class="kn">import</span> <span class="nn">imagecodecs</span>  <span class="c1"># Required for reading LZW-compressed TIFFs</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">skimage.color</span> <span class="kn">import</span> <span class="n">rgb2hed</span><span class="p">,</span> <span class="n">rgb2gray</span>
 <span class="kn">from</span> <span class="nn">skimage.measure</span> <span class="kn">import</span> <span class="n">block_reduce</span>
@@ -305,7 +306,7 @@
 </div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- Utility Functions ---</span>
@@ -619,17 +620,58 @@
 <section id="Step-2:-User-Inputs">
 <h2>Step 2: User Inputs<a class="headerlink" href="#Step-2:-User-Inputs" title="Link to this heading">¶</a></h2>
 <p>Configure the paths and parameters for your alignment. Update the file paths below to point to your images.</p>
+<p>Download the example dataset from Figshare (doi: <a class="reference external" href="https://doi.org/10.6084/m9.figshare.30676556">10.6084/m9.figshare.30676556</a>). The download is skipped automatically if the files already exist.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">urllib.request</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="n">data_dir</span> <span class="o">=</span> <span class="s2">&quot;Align_modality_example_data&quot;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">files</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;CODEX_data.tif&quot;</span><span class="p">:</span> <span class="s2">&quot;https://ndownloader.figshare.com/files/62503219&quot;</span><span class="p">,</span>              <span class="c1"># Target image (~411 MB)</span>
+    <span class="s2">&quot;cytassist_image.tiff&quot;</span><span class="p">:</span> <span class="s2">&quot;https://ndownloader.figshare.com/files/62503225&quot;</span><span class="p">,</span>         <span class="c1"># Moving image (~17 MB)</span>
+    <span class="s2">&quot;tissue_positions_list.csv&quot;</span><span class="p">:</span> <span class="s2">&quot;https://ndownloader.figshare.com/files/62503207&quot;</span><span class="p">,</span>    <span class="c1"># Visium spot coordinates</span>
+<span class="p">}</span>
+
+<span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">files</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">filepath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">filepath</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Already exists: </span><span class="si">{</span><span class="n">filepath</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Downloading </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
+        <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">filepath</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Saved to </span><span class="si">{</span><span class="n">filepath</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Downloading CODEX_data.tif...
+  Saved to Align_modality_example_data/CODEX_data.tif
+Downloading cytassist_image.tiff...
+  Saved to Align_modality_example_data/cytassist_image.tiff
+Downloading tissue_positions_list.csv...
+  Saved to Align_modality_example_data/tissue_positions_list.csv
+</pre></div></div>
+</div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- File Paths ---</span>
-<span class="n">im_target_path</span> <span class="o">=</span> <span class="s1">&#39;../HCC/hi_res_codex_img/071-2.ome.tif&#39;</span>   <span class="c1"># Target (reference) image</span>
-<span class="n">im_moving_path</span> <span class="o">=</span> <span class="s1">&#39;../HCC/visium/cytassist_73_post/spatial/cytassist_image.tiff&#39;</span>  <span class="c1"># Moving image (to be aligned)</span>
+<span class="n">im_target_path</span> <span class="o">=</span> <span class="s1">&#39;Align_modality_example_data/CODEX_data.tif&#39;</span>        <span class="c1"># Target (reference) image</span>
+<span class="n">im_moving_path</span> <span class="o">=</span> <span class="s1">&#39;Align_modality_example_data/cytassist_image.tiff&#39;</span>  <span class="c1"># Moving image (to be aligned)</span>
 
 <span class="c1"># (Optional) Visium spot coordinate files</span>
-<span class="n">input_visium_coords_path</span> <span class="o">=</span> <span class="s1">&#39;../HCC/visium/cytassist_73_post/spatial/tissue_positions_list.csv&#39;</span>
-<span class="n">output_visium_coords_path</span> <span class="o">=</span> <span class="s1">&#39;../HCC/transformed_visium_loc/073_4_tissue_positions_list.csv&#39;</span>
+<span class="n">input_visium_coords_path</span> <span class="o">=</span> <span class="s1">&#39;Align_modality_example_data/tissue_positions_list.csv&#39;</span>
+<span class="n">output_visium_coords_path</span> <span class="o">=</span> <span class="s1">&#39;Align_modality_example_data/transformed_tissue_positions_list.csv&#39;</span>
 
 <span class="c1"># --- Image Parameters ---</span>
 <span class="n">scale_factor_target</span> <span class="o">=</span> <span class="mi">15</span>   <span class="c1"># Downscale factor for target image</span>
@@ -645,8 +687,8 @@
 <section id="Step-3:-Load-and-Preprocess-Images">
 <h2>Step 3: Load and Preprocess Images<a class="headerlink" href="#Step-3:-Load-and-Preprocess-Images" title="Link to this heading">¶</a></h2>
 <p>Load the target and moving images, apply optional mirroring, and downscale for faster keypoint detection. The downscaled images are used for alignment; the full-resolution images are transformed later.</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load images</span>
@@ -679,6 +721,89 @@
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Target image shape: </span><span class="si">{</span><span class="n">im_target</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">ValueError</span>                                Traceback (most recent call last)
+<span class="ansi-green-fg">/tmp/ipykernel_29910/1894465870.py</span> in <span class="ansi-cyan-fg">?</span><span class="ansi-blue-fg">()</span>
+<span class="ansi-green-intense-fg ansi-bold">      1</span> <span class="ansi-red-fg"># Load images</span>
+<span class="ansi-green-fg">----&gt; 2</span><span class="ansi-red-fg"> </span>im_target_full_res <span class="ansi-blue-fg">=</span> tifffile<span class="ansi-blue-fg">.</span>imread<span class="ansi-blue-fg">(</span>im_target_path<span class="ansi-blue-fg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">      3</span> im_target_full_res <span class="ansi-blue-fg">=</span> np<span class="ansi-blue-fg">.</span>sum<span class="ansi-blue-fg">(</span>im_target_full_res<span class="ansi-blue-fg">,</span> axis<span class="ansi-blue-fg">=</span><span class="ansi-cyan-fg">0</span><span class="ansi-blue-fg">)</span>  <span class="ansi-red-fg"># Sum across channels for multi-channel TIFFs</span>
+<span class="ansi-green-intense-fg ansi-bold">      4</span>
+<span class="ansi-green-intense-fg ansi-bold">      5</span> im_moving_full_res <span class="ansi-blue-fg">=</span> io<span class="ansi-blue-fg">.</span>imread<span class="ansi-blue-fg">(</span>im_moving_path<span class="ansi-blue-fg">)</span>
+
+<span class="ansi-green-fg">/oak/stanford/groups/quake/siyu/miniconda3/envs/coral_env/lib/python3.12/site-packages/tifffile/tifffile.py</span> in <span class="ansi-cyan-fg">?</span><span class="ansi-blue-fg">(files, selection, aszarr, key, series, level, squeeze, maxworkers, buffersize, mode, name, offset, size, pattern, axesorder, categories, imread, imreadargs, sort, container, chunkshape, chunkdtype, axestiled, ioworkers, chunkmode, fillvalue, zattrs, multiscales, omexml, superres, out, out_inplace, _multifile, _useframes, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">   1204</span>
+<span class="ansi-green-intense-fg ansi-bold">   1205</span>                     <span class="ansi-green-fg">from</span> <span class="ansi-blue-fg">.</span>zarr <span class="ansi-green-fg">import</span> zarr_selection
+<span class="ansi-green-intense-fg ansi-bold">   1206</span>
+<span class="ansi-green-intense-fg ansi-bold">   1207</span>                     <span class="ansi-green-fg">return</span> zarr_selection<span class="ansi-blue-fg">(</span>store<span class="ansi-blue-fg">,</span> selection<span class="ansi-blue-fg">,</span> out<span class="ansi-blue-fg">=</span>out<span class="ansi-blue-fg">)</span>
+<span class="ansi-green-fg">-&gt; 1208</span><span class="ansi-red-fg">                 return tif.asarray(
+</span><span class="ansi-green-intense-fg ansi-bold">   1209</span>                     key<span class="ansi-blue-fg">=</span>key<span class="ansi-blue-fg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   1210</span>                     series<span class="ansi-blue-fg">=</span>series<span class="ansi-blue-fg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   1211</span>                     level<span class="ansi-blue-fg">=</span>level<span class="ansi-blue-fg">,</span>
+
+<span class="ansi-green-fg">/oak/stanford/groups/quake/siyu/miniconda3/envs/coral_env/lib/python3.12/site-packages/tifffile/tifffile.py</span> in <span class="ansi-cyan-fg">?</span><span class="ansi-blue-fg">(self, key, series, level, squeeze, out, maxworkers, buffersize)</span>
+<span class="ansi-green-intense-fg ansi-bold">   4531</span>             result = page0.asarray(
+<span class="ansi-green-intense-fg ansi-bold">   4532</span>                 out<span class="ansi-blue-fg">=</span>out<span class="ansi-blue-fg">,</span> maxworkers<span class="ansi-blue-fg">=</span>maxworkers<span class="ansi-blue-fg">,</span> buffersize<span class="ansi-blue-fg">=</span>buffersize
+<span class="ansi-green-intense-fg ansi-bold">   4533</span>             <span class="ansi-blue-fg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">   4534</span>         <span class="ansi-green-fg">else</span><span class="ansi-blue-fg">:</span>
+<span class="ansi-green-fg">-&gt; 4535</span><span class="ansi-red-fg">             result = stack_pages(
+</span><span class="ansi-green-intense-fg ansi-bold">   4536</span>                 pages<span class="ansi-blue-fg">,</span> out<span class="ansi-blue-fg">=</span>out<span class="ansi-blue-fg">,</span> maxworkers<span class="ansi-blue-fg">=</span>maxworkers<span class="ansi-blue-fg">,</span> buffersize<span class="ansi-blue-fg">=</span>buffersize
+<span class="ansi-green-intense-fg ansi-bold">   4537</span>             <span class="ansi-blue-fg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">   4538</span>
+
+<span class="ansi-green-fg">/oak/stanford/groups/quake/siyu/miniconda3/envs/coral_env/lib/python3.12/site-packages/tifffile/tifffile.py</span> in <span class="ansi-cyan-fg">?</span><span class="ansi-blue-fg">(pages, tiled, lock, maxworkers, out, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">  21939</span>                 filecache<span class="ansi-blue-fg">.</span>close<span class="ansi-blue-fg">(</span>page<span class="ansi-blue-fg">.</span>parent<span class="ansi-blue-fg">.</span>filehandle<span class="ansi-blue-fg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">  21940</span>
+<span class="ansi-green-intense-fg ansi-bold">  21941</span>         <span class="ansi-green-fg">if</span> maxworkers <span class="ansi-blue-fg">&lt;</span> <span class="ansi-cyan-fg">2</span><span class="ansi-blue-fg">:</span>
+<span class="ansi-green-intense-fg ansi-bold">  21942</span>             <span class="ansi-green-fg">for</span> index<span class="ansi-blue-fg">,</span> page <span class="ansi-green-fg">in</span> enumerate<span class="ansi-blue-fg">(</span>pages<span class="ansi-blue-fg">)</span><span class="ansi-blue-fg">:</span>
+<span class="ansi-green-fg">&gt; 21943</span><span class="ansi-red-fg">                 </span>func<span class="ansi-blue-fg">(</span>page<span class="ansi-blue-fg">,</span> index<span class="ansi-blue-fg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">  21944</span>         <span class="ansi-green-fg">else</span><span class="ansi-blue-fg">:</span>
+<span class="ansi-green-intense-fg ansi-bold">  21945</span>             page0<span class="ansi-blue-fg">.</span>decode  <span class="ansi-red-fg"># init TiffPage.decode function</span>
+<span class="ansi-green-intense-fg ansi-bold">  21946</span>             <span class="ansi-green-fg">with</span> ThreadPoolExecutor<span class="ansi-blue-fg">(</span>maxworkers<span class="ansi-blue-fg">)</span> <span class="ansi-green-fg">as</span> executor<span class="ansi-blue-fg">:</span>
+
+<span class="ansi-green-fg">/oak/stanford/groups/quake/siyu/miniconda3/envs/coral_env/lib/python3.12/site-packages/tifffile/tifffile.py</span> in <span class="ansi-cyan-fg">?</span><span class="ansi-blue-fg">(page, index, out, filecache, kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">  21934</span>         <span class="ansi-blue-fg">)</span> <span class="ansi-blue-fg">-&gt;</span> <span class="ansi-green-fg">None</span><span class="ansi-blue-fg">:</span>
+<span class="ansi-green-intense-fg ansi-bold">  21935</span>             <span class="ansi-red-fg"># read, decode, and copy page data</span>
+<span class="ansi-green-intense-fg ansi-bold">  21936</span>             <span class="ansi-green-fg">if</span> page <span class="ansi-green-fg">is</span> <span class="ansi-green-fg">not</span> <span class="ansi-green-fg">None</span><span class="ansi-blue-fg">:</span>
+<span class="ansi-green-intense-fg ansi-bold">  21937</span>                 filecache<span class="ansi-blue-fg">.</span>open<span class="ansi-blue-fg">(</span>page<span class="ansi-blue-fg">.</span>parent<span class="ansi-blue-fg">.</span>filehandle<span class="ansi-blue-fg">)</span>
+<span class="ansi-green-fg">&gt; 21938</span><span class="ansi-red-fg">                 </span>page<span class="ansi-blue-fg">.</span>asarray<span class="ansi-blue-fg">(</span>lock<span class="ansi-blue-fg">=</span>lock<span class="ansi-blue-fg">,</span> out<span class="ansi-blue-fg">=</span>out<span class="ansi-blue-fg">[</span>index<span class="ansi-blue-fg">]</span><span class="ansi-blue-fg">,</span> <span class="ansi-blue-fg">**</span>kwargs<span class="ansi-blue-fg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">  21939</span>                 filecache<span class="ansi-blue-fg">.</span>close<span class="ansi-blue-fg">(</span>page<span class="ansi-blue-fg">.</span>parent<span class="ansi-blue-fg">.</span>filehandle<span class="ansi-blue-fg">)</span>
+
+<span class="ansi-green-fg">/oak/stanford/groups/quake/siyu/miniconda3/envs/coral_env/lib/python3.12/site-packages/tifffile/tifffile.py</span> in <span class="ansi-cyan-fg">?</span><span class="ansi-blue-fg">(self, out, squeeze, lock, maxworkers, buffersize)</span>
+<span class="ansi-green-intense-fg ansi-bold">   8935</span>                     <span class="ansi-blue-fg">]</span>
+<span class="ansi-green-intense-fg ansi-bold">   8936</span>                 <span class="ansi-red-fg"># except IndexError:</span>
+<span class="ansi-green-intense-fg ansi-bold">   8937</span>                 <span class="ansi-red-fg">#     pass  # corrupted file, for example, with too many strips</span>
+<span class="ansi-green-intense-fg ansi-bold">   8938</span>
+<span class="ansi-green-fg">-&gt; 8939</span><span class="ansi-red-fg">             for _ in self.segments(
+</span><span class="ansi-green-intense-fg ansi-bold">   8940</span>                 func<span class="ansi-blue-fg">=</span>func<span class="ansi-blue-fg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   8941</span>                 lock<span class="ansi-blue-fg">=</span>lock<span class="ansi-blue-fg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   8942</span>                 maxworkers<span class="ansi-blue-fg">=</span>maxworkers<span class="ansi-blue-fg">,</span>
+
+<span class="ansi-green-fg">/oak/stanford/groups/quake/siyu/miniconda3/envs/coral_env/lib/python3.12/site-packages/tifffile/tifffile.py</span> in <span class="ansi-cyan-fg">?</span><span class="ansi-blue-fg">(self, lock, maxworkers, func, sort, buffersize, _fullsize)</span>
+<span class="ansi-green-intense-fg ansi-bold">   8735</span>                 sort<span class="ansi-blue-fg">=</span>sort<span class="ansi-blue-fg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   8736</span>                 buffersize<span class="ansi-blue-fg">=</span>buffersize<span class="ansi-blue-fg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   8737</span>                 flat<span class="ansi-blue-fg">=</span><span class="ansi-green-fg">True</span><span class="ansi-blue-fg">,</span>
+<span class="ansi-green-intense-fg ansi-bold">   8738</span>             <span class="ansi-blue-fg">)</span><span class="ansi-blue-fg">:</span>
+<span class="ansi-green-fg">-&gt; 8739</span><span class="ansi-red-fg">                 </span><span class="ansi-green-fg">yield</span> decode<span class="ansi-blue-fg">(</span>segment<span class="ansi-blue-fg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">   8740</span>         <span class="ansi-green-fg">else</span><span class="ansi-blue-fg">:</span>
+<span class="ansi-green-intense-fg ansi-bold">   8741</span>             <span class="ansi-red-fg"># reduce memory overhead by processing chunks of up to</span>
+<span class="ansi-green-intense-fg ansi-bold">   8742</span>             <span class="ansi-red-fg"># buffersize of segments because ThreadPoolExecutor.map is not</span>
+
+<span class="ansi-green-fg">/oak/stanford/groups/quake/siyu/miniconda3/envs/coral_env/lib/python3.12/site-packages/tifffile/tifffile.py</span> in <span class="ansi-cyan-fg">?</span><span class="ansi-blue-fg">(args, decodeargs, decode)</span>
+<span class="ansi-green-intense-fg ansi-bold">   8725</span>             <span class="ansi-green-fg">def</span> decode<span class="ansi-blue-fg">(</span>args<span class="ansi-blue-fg">,</span> decodeargs<span class="ansi-blue-fg">=</span>decodeargs<span class="ansi-blue-fg">,</span> decode<span class="ansi-blue-fg">=</span>keyframe<span class="ansi-blue-fg">.</span>decode<span class="ansi-blue-fg">)</span><span class="ansi-blue-fg">:</span>
+<span class="ansi-green-fg">-&gt; 8726</span><span class="ansi-red-fg">                 </span><span class="ansi-green-fg">return</span> func<span class="ansi-blue-fg">(</span>decode<span class="ansi-blue-fg">(</span><span class="ansi-blue-fg">*</span>args<span class="ansi-blue-fg">,</span> <span class="ansi-blue-fg">**</span>decodeargs<span class="ansi-blue-fg">)</span><span class="ansi-blue-fg">)</span>
+
+<span class="ansi-green-fg">/oak/stanford/groups/quake/siyu/miniconda3/envs/coral_env/lib/python3.12/site-packages/tifffile/tifffile.py</span> in <span class="ansi-cyan-fg">?</span><span class="ansi-blue-fg">(exc, *args, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">   8142</span>             <span class="ansi-green-fg">def</span> decode_raise_compression<span class="ansi-blue-fg">(</span><span class="ansi-blue-fg">*</span>args<span class="ansi-blue-fg">,</span> exc<span class="ansi-blue-fg">=</span>str<span class="ansi-blue-fg">(</span>exc<span class="ansi-blue-fg">)</span><span class="ansi-blue-fg">[</span><span class="ansi-cyan-fg">1</span><span class="ansi-blue-fg">:</span><span class="ansi-blue-fg">-</span><span class="ansi-cyan-fg">1</span><span class="ansi-blue-fg">]</span><span class="ansi-blue-fg">,</span> <span class="ansi-blue-fg">**</span>kwargs<span class="ansi-blue-fg">)</span><span class="ansi-blue-fg">:</span>
+<span class="ansi-green-fg">-&gt; 8143</span><span class="ansi-red-fg">                 </span><span class="ansi-green-fg">raise</span> ValueError<span class="ansi-blue-fg">(</span><span class="ansi-blue-fg">f&#39;</span><span class="ansi-blue-fg">{</span>exc<span class="ansi-blue-fg">}</span><span class="ansi-blue-fg">&#39;</span><span class="ansi-blue-fg">)</span>
+
+<span class="ansi-red-fg">ValueError</span>: &lt;COMPRESSION.LZW: 5&gt; requires the &#39;imagecodecs&#39; package
+</pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:

@@ -299,7 +299,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <section id="Step-1:-Import-Libraries">
 <h2>Step 1: Import Libraries<a class="headerlink" href="#Step-1:-Import-Libraries" title="Link to this heading">¶</a></h2>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">load_ext</span> autoreload
@@ -313,12 +313,15 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <span class="kn">import</span> <span class="nn">anndata</span>
 <span class="kn">import</span> <span class="nn">torch</span>
 
-<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">adjusted_rand_score</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">mutual_info_score</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">SyntaxWarning</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">coral</span>
@@ -329,8 +332,8 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <section id="Step-2:-Download-and-Load-Data">
 <h2>Step 2: Download and Load Data<a class="headerlink" href="#Step-2:-Download-and-Load-Data" title="Link to this heading">¶</a></h2>
 <p>Download the mouse thymus dataset from Figshare (doi: <a class="reference external" href="https://doi.org/10.6084/m9.figshare.30676556">10.6084/m9.figshare.30676556</a>). The download is skipped automatically if the files already exist.</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">urllib.request</span>
@@ -356,8 +359,21 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 </pre></div>
 </div>
 </div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Downloading adata_thymus1_annotation.h5ad...
+  Saved to Mouse_thymus_data/adata_thymus1_annotation.h5ad
+Downloading adata_ADT.h5ad...
+  Saved to Mouse_thymus_data/adata_ADT.h5ad
+Downloading adata_RNA_low.h5ad...
+  Saved to Mouse_thymus_data/adata_RNA_low.h5ad
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load the three h5ad files</span>
@@ -372,13 +388,22 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 </pre></div>
 </div>
 </div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/tmp/ipykernel_13136/3957001530.py:7: ImplicitModificationWarning: Trying to modify attribute `.obs` of view, initializing view as actual.
+  hires_adata.obs[&#39;Annotation&#39;] = ground_truth_adata.obs[&#39;Annotation&#39;].astype(str)
+</pre></div></div>
+</div>
 </section>
 <section id="Step-3:-(Optional)-Visualize-Input-Data">
 <h2>Step 3: (Optional) Visualize Input Data<a class="headerlink" href="#Step-3:-(Optional)-Visualize-Input-Data" title="Link to this heading">¶</a></h2>
 <p>Before running CORAL, inspect the spatial organization of both modalities. The high-resolution data (CODEX) captures protein expression at single-cell resolution, while the low-resolution data (Visium) measures transcriptomes at a larger spatial scale.</p>
 <p>Leiden clustering is used for initial unsupervised visualization. Adjust the <code class="docutils literal notranslate"><span class="pre">res</span></code> parameter to control cluster granularity.</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">coral</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">plot_spatial</span><span class="p">(</span>
@@ -398,8 +423,24 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 </pre></div>
 </div>
 </div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/oak/stanford/groups/quake/siyu/coral_revision2/CORAL/coral/utils/visualization.py:134: UserWarning: Tight layout not applied. The bottom and top margins cannot be made large enough to accommodate all Axes decorations.
+  plt.tight_layout()
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorials_coral_tutorial_10_1.png" src="../_images/tutorials_coral_tutorial_10_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">coral</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">plot_spatial</span><span class="p">(</span>
@@ -421,12 +462,19 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 </pre></div>
 </div>
 </div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorials_coral_tutorial_11_0.png" src="../_images/tutorials_coral_tutorial_11_0.png" />
+</div>
+</div>
 </section>
 <section id="Step-4:-(Optional)-Visualize-Ground-Truth-Annotations">
 <h2>Step 4: (Optional) Visualize Ground Truth Annotations<a class="headerlink" href="#Step-4:-(Optional)-Visualize-Ground-Truth-Annotations" title="Link to this heading">¶</a></h2>
 <p>The ground truth annotations provide manually curated cell-type labels for the high-resolution data. We visualize these in spatial coordinates and as a UMAP embedding to understand the expected tissue organization.</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">coral</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">plot_spatial</span><span class="p">(</span>
@@ -446,8 +494,24 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 </pre></div>
 </div>
 </div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/oak/stanford/groups/quake/siyu/coral_revision2/CORAL/coral/utils/visualization.py:134: UserWarning: Tight layout not applied. The left and right margins cannot be made large enough to accommodate all Axes decorations.
+  plt.tight_layout()
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorials_coral_tutorial_13_1.png" src="../_images/tutorials_coral_tutorial_13_1.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">coral</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">plot_umap</span><span class="p">(</span>
@@ -467,8 +531,15 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 </pre></div>
 </div>
 </div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorials_coral_tutorial_14_0.png" src="../_images/tutorials_coral_tutorial_14_0.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">coral</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">plot_umap_gene</span><span class="p">(</span>
@@ -487,6 +558,22 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 </pre></div>
 </div>
 </div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/oak/stanford/groups/quake/siyu/coral_revision2/CORAL/coral/utils/visualization.py:356: UserWarning: No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+  ax.legend(
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/tutorials_coral_tutorial_15_1.png" src="../_images/tutorials_coral_tutorial_15_1.png" />
+</div>
+</div>
 </section>
 <section id="Step-5:-Assign-Cell-Types-to-High-Resolution-Data">
 <h2>Step 5: Assign Cell Types to High-Resolution Data<a class="headerlink" href="#Step-5:-Assign-Cell-Types-to-High-Resolution-Data" title="Link to this heading">¶</a></h2>
@@ -500,7 +587,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <div><p><strong>Note:</strong> If manual annotations are available, use those instead of unsupervised clusters for better results.</p>
 </div></blockquote>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">hires_adata</span> <span class="o">=</span> <span class="n">coral</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">add_cluster</span><span class="p">(</span>
@@ -525,8 +612,8 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">n_neighbors</span></code>: Number of spatial neighbors for graph construction (default: 40). Increase for denser tissues; decrease for sparser ones.</p></li>
 </ul>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">combined_expr</span><span class="p">,</span> <span class="n">hires_coords</span><span class="p">,</span> <span class="n">one_hot_cell_types</span><span class="p">,</span> <span class="n">spot_indices</span><span class="p">,</span> <span class="n">lowres_expr</span> <span class="o">=</span> <span class="n">coral</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">preprocess_data</span><span class="p">(</span>
@@ -537,6 +624,15 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
     <span class="n">spot_indices</span><span class="p">,</span> <span class="n">lowres_expr</span><span class="p">,</span> <span class="n">n_neighbors</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/oak/stanford/groups/quake/siyu/coral_revision2/CORAL/coral/utils/preprocessing.py:130: UserWarning: &#39;data.DataLoader&#39; is deprecated, use &#39;loader.DataLoader&#39; instead
+  dataloader = DataLoader(data_list, batch_size=8, shuffle=True)
+</pre></div></div>
 </div>
 </section>
 <section id="Step-7:-Create-CORAL-Model">
@@ -555,8 +651,8 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <li><p><code class="docutils literal notranslate"><span class="pre">hidden_channels</span></code>: Hidden layer width in GAT (default: 128).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">v_dim</span></code>: Dimension of the nuisance variable <em>v</em> (default: 1).</p></li>
 </ul>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cuda&#39;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
@@ -572,8 +668,18 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 </pre></div>
 </div>
 </div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+GPU is available.
+Number of GPUs available: 1
+GPU 0: NVIDIA L40S
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span> <span class="o">=</span> <span class="n">coral</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">create_model</span><span class="p">(</span>
@@ -590,6 +696,74 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 </pre></div>
 </div>
 </div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+CORAL_model(
+  (encoder_visium): Sequential(
+    (0): Linear(in_features=3036, out_features=128, bias=True)
+    (1): ReLU()
+    (2): Linear(in_features=128, out_features=128, bias=True)
+  )
+  (encoder_codex): Sequential(
+    (0): Linear(in_features=51, out_features=128, bias=True)
+    (1): ReLU()
+    (2): Linear(in_features=128, out_features=128, bias=True)
+  )
+  (encoder): Sequential(
+    (0): Linear(in_features=3087, out_features=128, bias=True)
+    (1): ReLU()
+    (2): Linear(in_features=128, out_features=128, bias=True)
+  )
+  (zi_prior): Sequential(
+    (0): Linear(in_features=9, out_features=128, bias=True)
+    (1): ReLU()
+    (2): Linear(in_features=128, out_features=128, bias=True)
+  )
+  (cross_attention): CrossAttentionLayer(
+    (query_proj): Linear(in_features=64, out_features=64, bias=True)
+    (key_proj): Linear(in_features=64, out_features=64, bias=True)
+    (value_proj): Linear(in_features=64, out_features=64, bias=True)
+    (softmax): Softmax(dim=-1)
+  )
+  (deconv): DeconvolutionLayer(
+    (fc1): Sequential(
+      (0): Linear(in_features=3036, out_features=256, bias=True)
+      (1): ReLU()
+    )
+    (fc2): Sequential(
+      (0): Linear(in_features=264, out_features=64, bias=True)
+      (1): ReLU()
+    )
+    (fc3): Sequential(
+      (0): Linear(in_features=72, out_features=3028, bias=True)
+    )
+  )
+  (gat1): GATConv(64, 128, heads=4)
+  (gat2): GATConv(512, 64, heads=1)
+  (hidden_decoder): Sequential(
+    (0): Linear(in_features=64, out_features=128, bias=True)
+    (1): ReLU()
+  )
+  (visium_scale_decoder): Sequential(
+    (0): Linear(in_features=128, out_features=3028, bias=True)
+    (1): Softmax(dim=-1)
+  )
+  (codex_scale_decoder): Sequential(
+    (0): Linear(in_features=128, out_features=51, bias=True)
+    (1): Softmax(dim=-1)
+  )
+  (cell_type_decoder): Linear(in_features=64, out_features=8, bias=True)
+  (v_layer): Sequential(
+    (0): Linear(in_features=3151, out_features=2, bias=True)
+  )
+  (layer_norm): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+)
+</pre></div></div>
+</div>
 </section>
 <section id="Step-8:-Train-the-Model">
 <h2>Step 8: Train the Model<a class="headerlink" href="#Step-8:-Train-the-Model" title="Link to this heading">¶</a></h2>
@@ -605,13 +779,164 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <li><p><code class="docutils literal notranslate"><span class="pre">epochs</span></code>: Number of training epochs (100 is sufficient for this dataset). Larger or more complex datasets may need 200–300 epochs.</p></li>
 </ul>
 <p>Training progress is printed as per-epoch loss values. Expect the loss to decrease and stabilize.</p>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">coral</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">train_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Epoch 0, Loss: 837651.3173894557
+Epoch 1, Loss: 770657.4944196428
+Epoch 2, Loss: 769074.0282738095
+Epoch 3, Loss: 765342.6061862245
+Epoch 4, Loss: 755766.4561011905
+Epoch 5, Loss: 751659.2102465987
+Epoch 6, Loss: 750088.2537733844
+Epoch 7, Loss: 748078.0375212585
+Epoch 8, Loss: 742152.8418367347
+Epoch 9, Loss: 738484.6672512755
+Epoch 10, Loss: 736354.2802933673
+Epoch 11, Loss: 735619.7055697279
+Epoch 12, Loss: 733923.2660501701
+Epoch 13, Loss: 733304.7290072279
+Epoch 14, Loss: 730967.2822066327
+Epoch 15, Loss: 730058.9565263606
+Epoch 16, Loss: 729182.6507759354
+Epoch 17, Loss: 728578.0754676871
+Epoch 18, Loss: 727427.7825255102
+Epoch 19, Loss: 725707.020567602
+Epoch 20, Loss: 725068.0844494047
+Epoch 21, Loss: 725091.0311968537
+Epoch 22, Loss: 723774.2189094388
+Epoch 23, Loss: 722808.5348639456
+Epoch 24, Loss: 722182.6932929421
+Epoch 25, Loss: 721472.450042517
+Epoch 26, Loss: 721077.0993835034
+Epoch 27, Loss: 719746.9280931122
+Epoch 28, Loss: 719385.284332483
+Epoch 29, Loss: 718800.8806866497
+Epoch 30, Loss: 718250.7728528911
+Epoch 31, Loss: 717857.0820046769
+Epoch 32, Loss: 717263.550170068
+Epoch 33, Loss: 716127.4137436225
+Epoch 34, Loss: 715665.353635204
+Epoch 35, Loss: 715296.1294642857
+Epoch 36, Loss: 715073.0704187925
+Epoch 37, Loss: 714604.4621598639
+Epoch 38, Loss: 714204.3559204933
+Epoch 39, Loss: 713768.4832057824
+Epoch 40, Loss: 713428.5529336735
+Epoch 41, Loss: 712582.3880739796
+Epoch 42, Loss: 712728.3959396258
+Epoch 43, Loss: 711957.9977678572
+Epoch 44, Loss: 711728.923735119
+Epoch 45, Loss: 711906.1103847789
+Epoch 46, Loss: 710918.3492772109
+Epoch 47, Loss: 710436.0224277211
+Epoch 48, Loss: 710349.0060055272
+Epoch 49, Loss: 710116.4960671769
+Epoch 50, Loss: 709586.7275191327
+Epoch 51, Loss: 708492.8602519133
+Epoch 52, Loss: 709245.4219812925
+Epoch 53, Loss: 709081.9255952381
+Epoch 54, Loss: 708311.746704932
+Epoch 55, Loss: 708089.6071428572
+Epoch 56, Loss: 707747.8192495748
+Epoch 57, Loss: 708116.7383078231
+Epoch 58, Loss: 707347.7757227891
+Epoch 59, Loss: 706720.2042942176
+Epoch 60, Loss: 706063.208067602
+Epoch 61, Loss: 706393.9973958334
+Epoch 62, Loss: 706382.3742559524
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">KeyboardInterrupt</span>                         Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[14], line 1</span>
+<span class="ansi-green-fg">----&gt; 1</span> <span class="ansi-yellow-bg">coral</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">trainer</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">train_model</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">model</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">optimizer</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">dataloader</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">epochs</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">100</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">device</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg">device</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">/oak/stanford/groups/quake/siyu/coral_revision2/CORAL/coral/trainer/train.py:139</span>, in <span class="ansi-cyan-fg">train_model</span><span class="ansi-blue-fg">(model, optimizer, dataloader, epochs, device, prot_idx, gene_idx)</span>
+<span class="ansi-green-intense-fg ansi-bold">    135</span> visium_true, codex_true <span style="color: rgb(98,98,98)">=</span> batch<span style="color: rgb(98,98,98)">.</span>visium_spot_exp, batch<span style="color: rgb(98,98,98)">.</span>x[:, model<span style="color: rgb(98,98,98)">.</span>visium_dim:]
+<span class="ansi-green-intense-fg ansi-bold">    136</span>  <span style="color: rgb(95,135,135)"># Compute edge weights for this specific batch</span>
+<span class="ansi-green-intense-fg ansi-bold">    137</span> <span style="color: rgb(95,135,135)">#edge_weights = spatial_attention(edge_index, spatial_coords)</span>
+<span class="ansi-green-fg">--&gt; 139</span> output <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">model</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">batch</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">device</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    141</span> codex_true <span style="color: rgb(98,98,98)">=</span> codex_true[center_cell]
+<span class="ansi-green-intense-fg ansi-bold">    142</span> cell_type <span style="color: rgb(98,98,98)">=</span> cell_type[center_cell]
+
+File <span class="ansi-green-fg">~/.local/lib/python3.12/site-packages/torch/nn/modules/module.py:1739</span>, in <span class="ansi-cyan-fg">Module._wrapped_call_impl</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">   1737</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_compiled_call_impl(<span style="color: rgb(98,98,98)">*</span>args, <span style="color: rgb(98,98,98)">*</span><span style="color: rgb(98,98,98)">*</span>kwargs)  <span style="color: rgb(95,135,135)"># type: ignore[misc]</span>
+<span class="ansi-green-intense-fg ansi-bold">   1738</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
+<span class="ansi-green-fg">-&gt; 1739</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_call_impl</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/.local/lib/python3.12/site-packages/torch/nn/modules/module.py:1750</span>, in <span class="ansi-cyan-fg">Module._call_impl</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">   1745</span> <span style="color: rgb(95,135,135)"># If we don&#39;t have any hooks, we want to skip the rest of the logic in</span>
+<span class="ansi-green-intense-fg ansi-bold">   1746</span> <span style="color: rgb(95,135,135)"># this function, and just call forward.</span>
+<span class="ansi-green-intense-fg ansi-bold">   1747</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> (<span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_backward_hooks <span class="ansi-bold" style="color: rgb(175,0,255)">or</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_backward_pre_hooks <span class="ansi-bold" style="color: rgb(175,0,255)">or</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_forward_hooks <span class="ansi-bold" style="color: rgb(175,0,255)">or</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_forward_pre_hooks
+<span class="ansi-green-intense-fg ansi-bold">   1748</span>         <span class="ansi-bold" style="color: rgb(175,0,255)">or</span> _global_backward_pre_hooks <span class="ansi-bold" style="color: rgb(175,0,255)">or</span> _global_backward_hooks
+<span class="ansi-green-intense-fg ansi-bold">   1749</span>         <span class="ansi-bold" style="color: rgb(175,0,255)">or</span> _global_forward_hooks <span class="ansi-bold" style="color: rgb(175,0,255)">or</span> _global_forward_pre_hooks):
+<span class="ansi-green-fg">-&gt; 1750</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">forward_call</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">   1752</span> result <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>
+<span class="ansi-green-intense-fg ansi-bold">   1753</span> called_always_called_hooks <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">set</span>()
+
+File <span class="ansi-green-fg">/oak/stanford/groups/quake/siyu/coral_revision2/CORAL/coral/model/model_core.py:256</span>, in <span class="ansi-cyan-fg">CORAL_model.forward</span><span class="ansi-blue-fg">(self, batch, device)</span>
+<span class="ansi-green-intense-fg ansi-bold">    253</span> x_combined <span style="color: rgb(98,98,98)">=</span> torch<span style="color: rgb(98,98,98)">.</span>cat((q_xi, codex_x), dim<span style="color: rgb(98,98,98)">=</span><span style="color: rgb(98,98,98)">1</span>)
+<span class="ansi-green-intense-fg ansi-bold">    254</span> x_combined <span style="color: rgb(98,98,98)">=</span> torch<span style="color: rgb(98,98,98)">.</span>log1p(x_combined)
+<span class="ansi-green-fg">--&gt; 256</span> z, z_mu, z_logvar <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">encode</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">x_combined</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">cell_type</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">edge_index</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    258</span> v, v_m, v_logvar  <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>infer_v(x_combined, z, cell_type)
+<span class="ansi-green-intense-fg ansi-bold">    260</span> <span style="color: rgb(95,135,135)"># Infer p_z given v</span>
+
+File <span class="ansi-green-fg">/oak/stanford/groups/quake/siyu/coral_revision2/CORAL/coral/model/model_core.py:172</span>, in <span class="ansi-cyan-fg">CORAL_model.encode</span><span class="ansi-blue-fg">(self, x_combined, cell_type, edge_index)</span>
+<span class="ansi-green-intense-fg ansi-bold">    168</span> visium_mu    <span style="color: rgb(98,98,98)">=</span> torch<span style="color: rgb(98,98,98)">.</span>relu(visium_mu)
+<span class="ansi-green-intense-fg ansi-bold">    169</span> visium_mu, _ <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>gat2(visium_mu, edge_index,return_attention_weights<span style="color: rgb(98,98,98)">=</span><span class="ansi-bold" style="color: rgb(0,135,0)">True</span>)
+<span class="ansi-green-fg">--&gt; 172</span> codex_mu, _  <span style="color: rgb(98,98,98)">=</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">gat1</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">codex_mu</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">edge_index</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">return_attention_weights</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">=</span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">True</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">    173</span> codex_mu     <span style="color: rgb(98,98,98)">=</span> torch<span style="color: rgb(98,98,98)">.</span>relu(codex_mu)
+<span class="ansi-green-intense-fg ansi-bold">    174</span> codex_mu, _  <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>gat2(codex_mu, edge_index, return_attention_weights<span style="color: rgb(98,98,98)">=</span><span class="ansi-bold" style="color: rgb(0,135,0)">True</span>)
+
+File <span class="ansi-green-fg">~/.local/lib/python3.12/site-packages/torch/nn/modules/module.py:1739</span>, in <span class="ansi-cyan-fg">Module._wrapped_call_impl</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">   1737</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_compiled_call_impl(<span style="color: rgb(98,98,98)">*</span>args, <span style="color: rgb(98,98,98)">*</span><span style="color: rgb(98,98,98)">*</span>kwargs)  <span style="color: rgb(95,135,135)"># type: ignore[misc]</span>
+<span class="ansi-green-intense-fg ansi-bold">   1738</span> <span class="ansi-bold" style="color: rgb(0,135,0)">else</span>:
+<span class="ansi-green-fg">-&gt; 1739</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">_call_impl</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/.local/lib/python3.12/site-packages/torch/nn/modules/module.py:1750</span>, in <span class="ansi-cyan-fg">Module._call_impl</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-intense-fg ansi-bold">   1745</span> <span style="color: rgb(95,135,135)"># If we don&#39;t have any hooks, we want to skip the rest of the logic in</span>
+<span class="ansi-green-intense-fg ansi-bold">   1746</span> <span style="color: rgb(95,135,135)"># this function, and just call forward.</span>
+<span class="ansi-green-intense-fg ansi-bold">   1747</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> (<span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_backward_hooks <span class="ansi-bold" style="color: rgb(175,0,255)">or</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_backward_pre_hooks <span class="ansi-bold" style="color: rgb(175,0,255)">or</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_forward_hooks <span class="ansi-bold" style="color: rgb(175,0,255)">or</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_forward_pre_hooks
+<span class="ansi-green-intense-fg ansi-bold">   1748</span>         <span class="ansi-bold" style="color: rgb(175,0,255)">or</span> _global_backward_pre_hooks <span class="ansi-bold" style="color: rgb(175,0,255)">or</span> _global_backward_hooks
+<span class="ansi-green-intense-fg ansi-bold">   1749</span>         <span class="ansi-bold" style="color: rgb(175,0,255)">or</span> _global_forward_hooks <span class="ansi-bold" style="color: rgb(175,0,255)">or</span> _global_forward_pre_hooks):
+<span class="ansi-green-fg">-&gt; 1750</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">forward_call</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-intense-fg ansi-bold">   1752</span> result <span style="color: rgb(98,98,98)">=</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>
+<span class="ansi-green-intense-fg ansi-bold">   1753</span> called_always_called_hooks <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">set</span>()
+
+File <span class="ansi-green-fg">/oak/stanford/groups/quake/siyu/miniconda3/envs/coral_env/lib/python3.12/site-packages/torch_geometric/nn/conv/gat_conv.py:377</span>, in <span class="ansi-cyan-fg">GATConv.forward</span><span class="ansi-blue-fg">(self, x, edge_index, edge_attr, size, return_attention_weights)</span>
+<span class="ansi-green-intense-fg ansi-bold">    374</span>     out <span style="color: rgb(98,98,98)">=</span> out <span style="color: rgb(98,98,98)">+</span> res
+<span class="ansi-green-intense-fg ansi-bold">    376</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>bias <span class="ansi-bold" style="color: rgb(175,0,255)">is</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> <span class="ansi-bold" style="color: rgb(0,135,0)">None</span>:
+<span class="ansi-green-fg">--&gt; 377</span>     out <span style="color: rgb(98,98,98)">=</span> out <span style="color: rgb(98,98,98)">+</span> <span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg" style="color: rgb(98,98,98)">.</span><span class="ansi-yellow-bg">bias</span>
+<span class="ansi-green-intense-fg ansi-bold">    379</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">isinstance</span>(return_attention_weights, <span style="color: rgb(0,135,0)">bool</span>):
+<span class="ansi-green-intense-fg ansi-bold">    380</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(0,135,0)">isinstance</span>(edge_index, Tensor):
+
+File <span class="ansi-green-fg">~/.local/lib/python3.12/site-packages/torch/nn/modules/module.py:1915</span>, in <span class="ansi-cyan-fg">Module.__getattr__</span><span class="ansi-blue-fg">(self, name)</span>
+<span class="ansi-green-intense-fg ansi-bold">   1910</span>         <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span>_backward_pre_hooks <span style="color: rgb(98,98,98)">=</span> OrderedDict()
+<span class="ansi-green-intense-fg ansi-bold">   1912</span> <span style="color: rgb(95,135,135)"># It is crucial that the return type is not annotated as `Any`, otherwise type checking</span>
+<span class="ansi-green-intense-fg ansi-bold">   1913</span> <span style="color: rgb(95,135,135)"># on `torch.nn.Module` and all its subclasses is largely disabled as a result. See:</span>
+<span class="ansi-green-intense-fg ansi-bold">   1914</span> <span style="color: rgb(95,135,135)"># https://github.com/pytorch/pytorch/pull/115074</span>
+<span class="ansi-green-fg">-&gt; 1915</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span> <span style="color: rgb(0,0,255)">__getattr__</span>(<span style="color: rgb(0,135,0)">self</span>, name: <span style="color: rgb(0,135,0)">str</span>) <span style="color: rgb(98,98,98)">-</span><span style="color: rgb(98,98,98)">&gt;</span> Union[Tensor, <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">Module</span><span style="color: rgb(175,0,0)">&#34;</span>]:
+<span class="ansi-green-intense-fg ansi-bold">   1916</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">_parameters</span><span style="color: rgb(175,0,0)">&#34;</span> <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span><span style="color: rgb(0,0,135)">__dict__</span>:
+<span class="ansi-green-intense-fg ansi-bold">   1917</span>         _parameters <span style="color: rgb(98,98,98)">=</span> <span style="color: rgb(0,135,0)">self</span><span style="color: rgb(98,98,98)">.</span><span style="color: rgb(0,0,135)">__dict__</span>[<span style="color: rgb(175,0,0)">&#34;</span><span style="color: rgb(175,0,0)">_parameters</span><span style="color: rgb(175,0,0)">&#34;</span>]
+
+<span class="ansi-red-fg">KeyboardInterrupt</span>:
+</pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -671,7 +996,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <ul class="simple">
 <li><p><strong>Spatial cluster plot</strong>: Leiden clustering on CORAL embeddings, plotted in tissue coordinates</p></li>
 <li><p><strong>UMAP visualization</strong>: CORAL embedding UMAP colored by ground truth annotations</p></li>
-<li><p><strong>Adjusted Rand Index (ARI)</strong>: Quantitative measure of clustering agreement with ground truth (1.0 = perfect agreement)</p></li>
+<li><p><strong>Mutual Information (MI)</strong>: Quantitative measure of clustering agreement with ground truth (higher = better agreement)</p></li>
 </ul>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
@@ -722,9 +1047,9 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 <span class="n">sc</span><span class="o">.</span><span class="n">pp</span><span class="o">.</span><span class="n">neighbors</span><span class="p">(</span><span class="n">adata_eval</span><span class="p">,</span> <span class="n">n_neighbors</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">use_rep</span><span class="o">=</span><span class="s1">&#39;coral&#39;</span><span class="p">)</span>
 <span class="n">sc</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">leiden</span><span class="p">(</span><span class="n">adata_eval</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="mf">0.82</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">flavor</span><span class="o">=</span><span class="s1">&#39;igraph&#39;</span><span class="p">)</span>
 
-<span class="c1"># Adjusted Rand Index: CORAL clusters vs ground truth annotations</span>
-<span class="n">ari</span> <span class="o">=</span> <span class="n">adjusted_rand_score</span><span class="p">(</span><span class="n">adata_eval</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s1">&#39;Annotation&#39;</span><span class="p">],</span> <span class="n">adata_eval</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s1">&#39;leiden&#39;</span><span class="p">])</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Adjusted Rand Index (CORAL clusters vs ground truth): </span><span class="si">{</span><span class="n">ari</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="c1"># Mutual Information: CORAL clusters vs ground truth annotations</span>
+<span class="n">mi</span> <span class="o">=</span> <span class="n">mutual_info_score</span><span class="p">(</span><span class="n">adata_eval</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s1">&#39;Annotation&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;str&#39;</span><span class="p">),</span> <span class="n">adata_eval</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s1">&#39;leiden&#39;</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Mutual Information (CORAL clusters vs ground truth): </span><span class="si">{</span><span class="n">mi</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -769,6 +1094,30 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
     <span class="n">color_list</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;#9f86c0&#39;</span><span class="p">,</span> <span class="s1">&#39;#d4e09b&#39;</span><span class="p">,</span> <span class="s1">&#39;#ff9f1c&#39;</span><span class="p">,</span> <span class="s1">&#39;#fdc500&#39;</span><span class="p">,</span> <span class="s1">&#39;#00509d&#39;</span><span class="p">,</span> <span class="s1">&#39;#8ecae6&#39;</span><span class="p">,</span>
                 <span class="s1">&#39;#dc2f02&#39;</span><span class="p">,</span> <span class="s1">&#39;#00296b&#39;</span><span class="p">,</span> <span class="s1">&#39;#219ebc&#39;</span><span class="p">,</span> <span class="s1">&#39;#126782&#39;</span><span class="p">,</span> <span class="s1">&#39;#023047&#39;</span><span class="p">,</span> <span class="s1">&#39;#ffc9b9&#39;</span><span class="p">,</span>
                 <span class="s1">&#39;#affc41&#39;</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;g&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
 </pre></div>
 </div>
 </div>
