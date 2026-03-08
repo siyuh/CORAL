@@ -5,11 +5,14 @@ import sys
 sys.path.insert(0, os.path.abspath(".."))
 
 # Ensure pandoc from pypandoc_binary is discoverable
-_pandoc_dir = os.path.join(
-    os.path.dirname(__import__("pypandoc").__file__), "files"
-)
-if os.path.isdir(_pandoc_dir):
-    os.environ["PATH"] = _pandoc_dir + os.pathsep + os.environ.get("PATH", "")
+try:
+    _pandoc_dir = os.path.join(
+        os.path.dirname(__import__("pypandoc").__file__), "files"
+    )
+    if os.path.isdir(_pandoc_dir):
+        os.environ["PATH"] = _pandoc_dir + os.pathsep + os.environ.get("PATH", "")
+except ImportError:
+    pass
 
 project = "CORAL"
 copyright = "2025, Siyu He"
