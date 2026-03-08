@@ -109,8 +109,8 @@ adata_model_gener = coral.inference.generate_and_validate(
 
 | Tutorial | Description |
 |---|---|
-| [Slide Alignment](https://github.com/zou-group/CORAL/blob/main/align_slides.ipynb) | Semi-automated alignment of spatial multi-omics slides using SIFT |
-| [Basic Tutorial](https://github.com/zou-group/CORAL/blob/main/coral_tutorial_basic.ipynb) | End-to-end walkthrough after data preparation |
+| [Slide Alignment](https://github.com/zou-group/CORAL/blob/main/align_slides_tutorial.ipynb) | Semi-automated alignment of spatial multi-omics slides using SIFT |
+| [Basic Tutorial](https://github.com/zou-group/CORAL/blob/main/coral_tutorial.ipynb) | End-to-end walkthrough after data preparation |
 
 > **Note:** If your spatial multi-omics datasets are not pre-aligned, start with the slide alignment tutorial before running CORAL.
 
