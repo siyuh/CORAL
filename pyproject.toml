@@ -19,6 +19,13 @@ cli = [
   "rich",
   "click",
 ]
+docs = [
+  "sphinx>=7.0",
+  "furo",
+  "nbsphinx",
+  "ipykernel",
+  "sphinx-copybutton",
+]
 
 [project.scripts]
 spam-cli = "spam:main_cli"

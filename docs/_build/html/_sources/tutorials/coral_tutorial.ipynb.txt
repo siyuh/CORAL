@@ -1,0 +1,678 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "a0001",
+   "metadata": {},
+   "source": [
+    "# CORAL Tutorial — Multi-scale Multi-modal Integration of Spatial Omics\n",
+    "\n",
+    "*March 2026*\n",
+    "\n",
+    "Siyu He"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a0002",
+   "metadata": {},
+   "source": [
+    "## Overview\n",
+    "\n",
+    "**CORAL** is a deep generative model that integrates spatial omics data across multiple modalities and resolutions. CORAL combines high-resolution spatial protein data (e.g., CODEX) with lower-resolution spatial transcriptomics data (e.g., Visium) to produce a unified latent representation and downstream analysis.\n",
+    "\n",
+    "### What this tutorial covers\n",
+    "\n",
+    "1. Loading and visualizing multi-modal spatial omics data\n",
+    "2. Preparing data for CORAL (preprocessing and graph construction)\n",
+    "3. Training the CORAL model\n",
+    "4. Running inference to obtain integrated embeddings\n",
+    "5. Evaluating CORAL embeddings against ground truth annotations\n",
+    "6. Generating enriched low-resolution expression profiles\n",
+    "\n",
+    "### Dataset\n",
+    "\n",
+    "We use a mouse thymus dataset with:\n",
+    "- **High-resolution (CODEX):** 4,697 cells × 51 proteins\n",
+    "- **Low-resolution (Visium):** ~200 spots × 3,036 genes\n",
+    "- **Ground truth:** Manual cell-type annotations\n",
+    "\n",
+    "### Runtime\n",
+    "\n",
+    "This tutorial takes approximately **15 minutes** on a GPU-equipped machine."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a0003",
+   "metadata": {},
+   "source": [
+    "## Prerequisites\n",
+    "\n",
+    "**Installation:**\n",
+    "\n",
+    "```bash\n",
+    "pip install git+https://github.com/zou-group/CORAL\n",
+    "```\n",
+    "\n",
+    "Or install from source:\n",
+    "\n",
+    "```bash\n",
+    "git clone https://github.com/shsiyu/CORAL.git\n",
+    "cd CORAL\n",
+    "pip install -e .\n",
+    "```\n",
+    "\n",
+    "**Dependencies:** scanpy, anndata, torch, torch_geometric, scikit-learn, umap-learn, scipy, matplotlib, seaborn\n",
+    "\n",
+    "**Hardware:** GPU recommended (NVIDIA GPU with CUDA support). CPU execution is supported but significantly slower."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a0004",
+   "metadata": {},
+   "source": [
+    "## Step 1: Import Libraries"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0005",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "%load_ext autoreload\n",
+    "%autoreload 2\n",
+    "\n",
+    "import numpy as np\n",
+    "import pandas as pd\n",
+    "import matplotlib.pyplot as plt\n",
+    "\n",
+    "import scanpy as sc\n",
+    "import anndata\n",
+    "import torch\n",
+    "\n",
+    "from sklearn.metrics import adjusted_rand_score"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0006",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import coral"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a0007",
+   "metadata": {},
+   "source": [
+    "## Step 2: Download and Load Data\n",
+    "\n",
+    "Download the mouse thymus dataset from Figshare (doi: [10.6084/m9.figshare.30676556](https://doi.org/10.6084/m9.figshare.30676556)). The download is skipped automatically if the files already exist."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0008",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import urllib.request\n",
+    "import os\n",
+    "\n",
+    "data_dir = \"Mouse_thymus_data\"\n",
+    "os.makedirs(data_dir, exist_ok=True)\n",
+    "\n",
+    "files = {\n",
+    "    \"adata_thymus1_annotation.h5ad\": \"https://ndownloader.figshare.com/files/59752970\",\n",
+    "    \"adata_ADT.h5ad\": \"https://ndownloader.figshare.com/files/59752967\",\n",
+    "    \"adata_RNA_low.h5ad\": \"https://ndownloader.figshare.com/files/59752973\",\n",
+    "}\n",
+    "\n",
+    "for filename, url in files.items():\n",
+    "    filepath = os.path.join(data_dir, filename)\n",
+    "    if os.path.exists(filepath):\n",
+    "        print(f\"Already exists: {filepath}\")\n",
+    "    else:\n",
+    "        print(f\"Downloading {filename}...\")\n",
+    "        urllib.request.urlretrieve(url, filepath)\n",
+    "        print(f\"  Saved to {filepath}\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0009",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Load the three h5ad files\n",
+    "ground_truth_adata = sc.read_h5ad('Mouse_thymus_data/adata_thymus1_annotation.h5ad')\n",
+    "hires_adata = sc.read_h5ad('Mouse_thymus_data/adata_ADT.h5ad')\n",
+    "lowres_adata = sc.read_h5ad('Mouse_thymus_data/adata_RNA_low.h5ad')\n",
+    "\n",
+    "hires_adata = hires_adata[hires_adata.obs_names, :]\n",
+    "hires_adata.obs['Annotation'] = ground_truth_adata.obs['Annotation'].astype(str)\n",
+    "\n",
+    "lowres_adata = lowres_adata[lowres_adata.obs_names, :]"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a0010",
+   "metadata": {},
+   "source": [
+    "## Step 3: (Optional) Visualize Input Data\n",
+    "\n",
+    "Before running CORAL, inspect the spatial organization of both modalities. The high-resolution data (CODEX) captures protein expression at single-cell resolution, while the low-resolution data (Visium) measures transcriptomes at a larger spatial scale.\n",
+    "\n",
+    "Leiden clustering is used for initial unsupervised visualization. Adjust the `res` parameter to control cluster granularity."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0011",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "coral.utils.plot_spatial(\n",
+    "    hires_adata,\n",
+    "    res=0.7,\n",
+    "    use_rep_for_cluster='X_pca',\n",
+    "    to_plot_var='cluster',\n",
+    "    need_lognormed=True,\n",
+    "    size=1,\n",
+    "    figsize=(3.5, 3),\n",
+    "    legd=True,\n",
+    "    invert_yaxis=True,\n",
+    "    axis_=False,\n",
+    "    color_list=['#9f86c0', '#d4e09b', '#ff9f1c', '#fdc500', '#00509d', '#8ecae6',\n",
+    "                '#dc2f02', '#00296b', '#219ebc', '#126782', '#023047', '#ffc9b9',\n",
+    "                '#affc41', 'k', 'y', 'g'])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0012",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "coral.utils.plot_spatial(\n",
+    "    lowres_adata,\n",
+    "    res=1.6235,\n",
+    "    use_rep_for_cluster='X_pca',\n",
+    "    to_plot_var='cluster',\n",
+    "    need_lognormed=True,\n",
+    "    size=10,\n",
+    "    figsize=(3.5, 2.7),\n",
+    "    legd=True,\n",
+    "    invert_yaxis=True,\n",
+    "    axis_=False,\n",
+    "    legend_fontsize=10,\n",
+    "    legend_markerscale=2,\n",
+    "    color_list=['#9f86c0', '#d4e09b', '#ff9f1c', '#fdc500', '#00509d', '#8ecae6',\n",
+    "                '#dc2f02', '#00296b', '#219ebc', '#126782', '#023047', '#ffc9b9',\n",
+    "                '#affc41', 'k', 'y', 'g'])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a0013",
+   "metadata": {},
+   "source": [
+    "## Step 4: (Optional) Visualize Ground Truth Annotations\n",
+    "\n",
+    "The ground truth annotations provide manually curated cell-type labels for the high-resolution data. We visualize these in spatial coordinates and as a UMAP embedding to understand the expected tissue organization."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0014",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "coral.utils.plot_spatial(\n",
+    "    ground_truth_adata,\n",
+    "    res=0.7,\n",
+    "    use_rep_for_cluster=None,\n",
+    "    to_plot_var='Annotation',\n",
+    "    need_lognormed=False,\n",
+    "    size=1,\n",
+    "    figsize=(3.5, 3),\n",
+    "    legd=True,\n",
+    "    invert_yaxis=True,\n",
+    "    axis_=False,\n",
+    "    color_list=['#9f86c0', '#d4e09b', '#ff9f1c', '#fdc500', '#00509d', '#8ecae6',\n",
+    "                '#dc2f02', '#00296b', '#219ebc', '#126782', '#023047', '#ffc9b9',\n",
+    "                '#affc41', 'k', 'y', 'g'])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0015",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "coral.utils.plot_umap(\n",
+    "    hires_adata,\n",
+    "    res=0.7,\n",
+    "    use_rep_for_cluster='X_pca',\n",
+    "    to_plot_var='Annotation',\n",
+    "    need_lognormed=True,\n",
+    "    size=15,\n",
+    "    figsize=(10, 5),\n",
+    "    legd=True,\n",
+    "    invert_yaxis=True,\n",
+    "    axis_=False,\n",
+    "    color_list=['#9f86c0', '#d4e09b', '#ff9f1c', '#fdc500', '#00509d', '#8ecae6',\n",
+    "                '#dc2f02', '#00296b', '#219ebc', '#126782', '#023047', '#ffc9b9',\n",
+    "                '#affc41', 'k', 'y', 'g'])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0016",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "coral.utils.plot_umap_gene(\n",
+    "    hires_adata,\n",
+    "    res=0.7,\n",
+    "    use_rep_for_cluster='X_pca',\n",
+    "    to_plot_gene='Mouse-CD19',\n",
+    "    need_lognormed=True,\n",
+    "    size=10,\n",
+    "    figsize=(3, 3),\n",
+    "    legd=True,\n",
+    "    invert_yaxis=True,\n",
+    "    axis_=False,\n",
+    "    vmin=0,\n",
+    "    vmax=6)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a0017",
+   "metadata": {},
+   "source": [
+    "## Step 5: Assign Cell Types to High-Resolution Data\n",
+    "\n",
+    "CORAL requires cell-type labels for the high-resolution data, used as conditioning variables during training. Here we use Leiden clustering as a proxy for cell types.\n",
+    "\n",
+    "**Key parameters:**\n",
+    "- `res`: Leiden clustering resolution. Higher values produce more clusters. Adjust based on expected number of cell types in your data.\n",
+    "- `use_rep_for_cluster`: Representation used for computing the neighbor graph (e.g., `'X_pca'`).\n",
+    "\n",
+    "> **Note:** If manual annotations are available, use those instead of unsupervised clusters for better results."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0018",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "hires_adata = coral.utils.add_cluster(\n",
+    "    hires_adata,\n",
+    "    res=0.7,\n",
+    "    use_rep_for_cluster='X_pca',\n",
+    "    need_lognormed=True)\n",
+    "\n",
+    "hires_adata.obs['cell_type'] = hires_adata.obs['cluster']"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a0019",
+   "metadata": {},
+   "source": [
+    "## Step 6: Prepare Data for CORAL\n",
+    "\n",
+    "This step preprocesses the input data and constructs local spatial subgraphs for training:\n",
+    "\n",
+    "1. **`preprocess_data`** aligns high-resolution cells to their nearest low-resolution spots, concatenates expression matrices, and computes one-hot encoded cell-type vectors.\n",
+    "2. **`prepare_local_subgraphs`** builds k-nearest-neighbor spatial graphs where each subgraph is centered on a high-resolution cell and its local neighborhood.\n",
+    "\n",
+    "**Key parameters:**\n",
+    "- `n_neighbors`: Number of spatial neighbors for graph construction (default: 40). Increase for denser tissues; decrease for sparser ones."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0020",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "combined_expr, hires_coords, one_hot_cell_types, spot_indices, lowres_expr = coral.utils.preprocess_data(\n",
+    "    lowres_adata, hires_adata)\n",
+    "\n",
+    "dataloader = coral.utils.prepare_local_subgraphs(\n",
+    "    combined_expr, hires_coords, one_hot_cell_types,\n",
+    "    spot_indices, lowres_expr, n_neighbors=40)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a0021",
+   "metadata": {},
+   "source": [
+    "## Step 7: Create CORAL Model\n",
+    "\n",
+    "Initialize the CORAL model architecture. The model consists of:\n",
+    "\n",
+    "- **Separate encoders** for high-resolution (protein) and low-resolution (RNA) modalities\n",
+    "- **Graph Attention Network (GAT)** layers for spatial context encoding\n",
+    "- **Cross-attention** between modalities\n",
+    "- **Variational inference** with latent variables *z* (shared embedding) and *v* (nuisance)\n",
+    "- **Deconvolution layer** for cell-type aware expression reconstruction\n",
+    "\n",
+    "**Key parameters:**\n",
+    "- `latent_dim`: Dimension of the shared latent space (default: 64). Larger values capture more variation.\n",
+    "- `hidden_channels`: Hidden layer width in GAT (default: 128).\n",
+    "- `v_dim`: Dimension of the nuisance variable *v* (default: 1)."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0022",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')\n",
+    "\n",
+    "if torch.cuda.is_available():\n",
+    "    print(\"GPU is available.\")\n",
+    "    gpu_count = torch.cuda.device_count()\n",
+    "    print(f\"Number of GPUs available: {gpu_count}\")\n",
+    "    for i in range(gpu_count):\n",
+    "        print(f\"GPU {i}: {torch.cuda.get_device_name(i)}\")\n",
+    "else:\n",
+    "    print(\"GPU is not available. Training will be slower.\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0023",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "model, optimizer = coral.model.create_model(\n",
+    "    lowres_dim=lowres_adata.shape[1],\n",
+    "    hires_dim=hires_adata.shape[1],\n",
+    "    lowres_size=lowres_adata.shape[0],\n",
+    "    hires_size=hires_adata.shape[0],\n",
+    "    cell_type_dim=one_hot_cell_types.shape[1],\n",
+    "    latent_dim=64,\n",
+    "    hidden_channels=128,\n",
+    "    v_dim=1)\n",
+    "\n",
+    "model.to(device)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a0024",
+   "metadata": {},
+   "source": [
+    "## Step 8: Train the Model\n",
+    "\n",
+    "Train the CORAL model using the prepared dataloader. The loss function includes:\n",
+    "- Reconstruction losses (Negative Binomial for RNA, Gamma for protein)\n",
+    "- KL divergence for latent variables *z* and *v*\n",
+    "- Contrastive loss for cross-modal alignment\n",
+    "- Graph Laplacian regularization for spatial smoothness\n",
+    "\n",
+    "**Key parameters:**\n",
+    "- `epochs`: Number of training epochs (100 is sufficient for this dataset). Larger or more complex datasets may need 200–300 epochs.\n",
+    "\n",
+    "Training progress is printed as per-epoch loss values. Expect the loss to decrease and stabilize."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0025",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "coral.trainer.train_model(model, optimizer, dataloader, epochs=100, device=device)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0026",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "model_save_path = \"model.pth\"\n",
+    "optimizer_save_path = \"optimizer.pth\"\n",
+    "\n",
+    "torch.save(model.state_dict(), model_save_path)\n",
+    "torch.save(optimizer.state_dict(), optimizer_save_path)\n",
+    "print(f\"Model saved to {model_save_path}\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a0027",
+   "metadata": {},
+   "source": [
+    "## Step 9: (Optional) Load Pre-trained Model\n",
+    "\n",
+    "If you have previously trained a model, you can load it here instead of retraining."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0028",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "model_save_path = \"model.pth\"\n",
+    "optimizer_save_path = \"optimizer.pth\"\n",
+    "\n",
+    "model.load_state_dict(torch.load(model_save_path))\n",
+    "optimizer.load_state_dict(torch.load(optimizer_save_path))\n",
+    "print(\"Model loaded successfully.\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a0029",
+   "metadata": {},
+   "source": [
+    "## Step 10: Run Inference\n",
+    "\n",
+    "Run the trained model on all subgraphs to generate:\n",
+    "\n",
+    "- **CORAL embeddings** (`adata.obsm['coral']`): Unified latent representation integrating both modalities\n",
+    "- **Generated expression** (`adata.obsm['generated_expr']`): Deconvolved low-resolution RNA expression at single-cell resolution\n",
+    "- **Edge indices and attention weights**: Graph structure and learned spatial attention for downstream analysis\n",
+    "\n",
+    "The output AnnData object is reindexed to match the original high-resolution data ordering."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0030",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "adata_model_gener, edges_all, attn_weights_all = coral.inference.generate_and_validate(\n",
+    "    model, dataloader, device, hires_adata)\n",
+    "\n",
+    "adata_model_gener"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a0031",
+   "metadata": {},
+   "source": [
+    "## Step 11: Analyze CORAL Embeddings\n",
+    "\n",
+    "Evaluate the quality of CORAL's learned embeddings by:\n",
+    "\n",
+    "- **Spatial cluster plot**: Leiden clustering on CORAL embeddings, plotted in tissue coordinates\n",
+    "- **UMAP visualization**: CORAL embedding UMAP colored by ground truth annotations\n",
+    "- **Adjusted Rand Index (ARI)**: Quantitative measure of clustering agreement with ground truth (1.0 = perfect agreement)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0032",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Spatial clusters from CORAL embeddings\n",
+    "coral.utils.plot_spatial(\n",
+    "    adata_model_gener,\n",
+    "    res=0.82,\n",
+    "    use_rep_for_cluster='coral',\n",
+    "    to_plot_var='cluster',\n",
+    "    need_lognormed=True,\n",
+    "    size=5,\n",
+    "    figsize=(4.5, 4.2),\n",
+    "    legd=True,\n",
+    "    invert_yaxis=True,\n",
+    "    axis_=False,\n",
+    "    color_list=['#9f86c0', '#d4e09b', '#ff9f1c', '#fdc500', '#00509d', '#8ecae6',\n",
+    "                '#dc2f02', '#00296b', '#219ebc', '#126782', '#023047', '#ffc9b9',\n",
+    "                '#affc41', 'k', 'y', 'g'])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0033",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Add ground truth annotations to the inference output\n",
+    "adata_model_gener.obs['Annotation'] = hires_adata.obs['Annotation'].values\n",
+    "\n",
+    "# UMAP of CORAL latent embeddings colored by ground truth annotations\n",
+    "coral.utils.plot_latent_umap(\n",
+    "    adata_model_gener,\n",
+    "    rep='coral',\n",
+    "    to_plot_var='Annotation',\n",
+    "    custom_palette=['#9f86c0', '#d4e09b', '#ff9f1c', '#fdc500', '#00509d', '#8ecae6',\n",
+    "                    '#dc2f02', '#00296b', '#219ebc', '#126782', '#023047', '#ffc9b9',\n",
+    "                    '#affc41', 'k', 'y', 'g'])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0034",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Compute CORAL embedding clusters using Leiden\n",
+    "adata_eval = adata_model_gener.copy()\n",
+    "sc.pp.neighbors(adata_eval, n_neighbors=100, use_rep='coral')\n",
+    "sc.tl.leiden(adata_eval, resolution=0.82, random_state=0, flavor='igraph')\n",
+    "\n",
+    "# Adjusted Rand Index: CORAL clusters vs ground truth annotations\n",
+    "ari = adjusted_rand_score(adata_eval.obs['Annotation'], adata_eval.obs['leiden'])\n",
+    "print(f\"Adjusted Rand Index (CORAL clusters vs ground truth): {ari:.4f}\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a0035",
+   "metadata": {},
+   "source": [
+    "## Step 12: Enriched Low-Resolution Data\n",
+    "\n",
+    "CORAL produces deconvolved gene expression profiles at single-cell resolution from the low-resolution modality. The `generated_expr` field in `adata_model_gener.obsm` contains these enriched profiles — effectively \"super-resolving\" the Visium spots into individual cell-level RNA expression estimates.\n",
+    "\n",
+    "Below we create a standalone AnnData from these enriched profiles and visualize its spatial clusters."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0036",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Create AnnData from deconvolved expression\n",
+    "enriched_lowres_adata = anndata.AnnData(adata_model_gener.obsm['generated_expr'])\n",
+    "enriched_lowres_adata.obsm = adata_model_gener.obsm.copy()\n",
+    "\n",
+    "# Add gene names from the original low-resolution data if dimensions match\n",
+    "if enriched_lowres_adata.shape[1] <= lowres_adata.shape[1]:\n",
+    "    enriched_lowres_adata.var_names = lowres_adata.var_names[:enriched_lowres_adata.shape[1]].copy()\n",
+    "\n",
+    "print(f\"Enriched low-resolution AnnData: {enriched_lowres_adata.shape[0]} cells x {enriched_lowres_adata.shape[1]} genes\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "a0037",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "coral.utils.plot_spatial(\n",
+    "    enriched_lowres_adata,\n",
+    "    res=1.3,\n",
+    "    use_rep_for_cluster='X_pca',\n",
+    "    to_plot_var='cluster',\n",
+    "    need_lognormed=True,\n",
+    "    size=5,\n",
+    "    figsize=(4.5, 4.2),\n",
+    "    legd=True,\n",
+    "    invert_yaxis=True,\n",
+    "    axis_=False,\n",
+    "    legend_fontsize=10,\n",
+    "    legend_markerscale=2,\n",
+    "    color_list=['#9f86c0', '#d4e09b', '#ff9f1c', '#fdc500', '#00509d', '#8ecae6',\n",
+    "                '#dc2f02', '#00296b', '#219ebc', '#126782', '#023047', '#ffc9b9',\n",
+    "                '#affc41', 'k', 'y', 'g'])"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "coral_env",
+   "language": "python",
+   "name": "coral_env"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.12.11"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

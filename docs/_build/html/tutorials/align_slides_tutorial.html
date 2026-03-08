@@ -1,0 +1,1059 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="API Reference" href="../api/index.html"><link rel="prev" title="CORAL Tutorial — Multi-scale Multi-modal Integration of Spatial Omics" href="coral_tutorial.html">
+        <link rel="prefetch" href="../_static/coral_logo.png" as="image">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>Align Images from Different Slices Using SIFT - CORAL</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=acfd86a5" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">CORAL</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo" src="../_static/coral_logo.png" alt="Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">CORAL</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Tutorials</a><input aria-label="Toggle navigation of Tutorials" checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="coral_tutorial.html">CORAL Tutorial — Multi-scale Multi-modal Integration of Spatial Omics</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Align Images from Different Slices Using SIFT</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../api/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/model.html">Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/preprocessing.html">Preprocessing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/visualization.html">Visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/inference.html">Inference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/trainer.html">Trainer</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/tutorials/align_slides_tutorial.ipynb.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="Align-Images-from-Different-Slices-Using-SIFT">
+<h1>Align Images from Different Slices Using SIFT<a class="headerlink" href="#Align-Images-from-Different-Slices-Using-SIFT" title="Link to this heading">¶</a></h1>
+<p><em>March 2026</em></p>
+<p>Matthew Bieniosek, Siyu He</p>
+<section id="Overview">
+<h2>Overview<a class="headerlink" href="#Overview" title="Link to this heading">¶</a></h2>
+<p>This tutorial demonstrates how to align two histology images from different spatial omics slices using feature-based image registration. The pipeline handles images with unknown relative translation, rotation, and/or scaling.</p>
+<section id="Method">
+<h3>Method<a class="headerlink" href="#Method" title="Link to this heading">¶</a></h3>
+<p>The alignment uses <a class="reference external" href="https://docs.opencv.org/4.x/de/dbf/classcv_1_1BRISK.html">BRISK</a> keypoint detection with <a class="reference external" href="https://docs.opencv.org/4.x/d0/d0e/classcv_1_1xfeatures2d_1_1VGG.html">VGG</a> descriptors, followed by brute-force matching and RANSAC-based transformation estimation. This is a robust approach for aligning tissue images that may differ in staining, resolution, or orientation.</p>
+</section>
+<section id="Pipeline">
+<h3>Pipeline<a class="headerlink" href="#Pipeline" title="Link to this heading">¶</a></h3>
+<ol class="arabic simple">
+<li><p>Load and downscale images for faster processing</p></li>
+<li><p>Convert to single-channel (grayscale or hematoxylin deconvolution)</p></li>
+<li><p>Enhance contrast using CLAHE</p></li>
+<li><p>Detect keypoints and compute transformation matrix</p></li>
+<li><p>Apply transformation and verify alignment</p></li>
+<li><p>(Optional) Scale back to full resolution</p></li>
+<li><p>(Optional) Transform Visium spot coordinates</p></li>
+</ol>
+</section>
+</section>
+<section id="Prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#Prerequisites" title="Link to this heading">¶</a></h2>
+<p><strong>Dependencies:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>opencv-contrib-python<span class="w"> </span>numpy<span class="w"> </span>matplotlib<span class="w"> </span>scikit-image<span class="w"> </span>imageio<span class="w"> </span>tifffile<span class="w"> </span>pandas<span class="w"> </span>scipy
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note:</strong> <code class="docutils literal notranslate"><span class="pre">opencv-contrib-python</span></code> (not just <code class="docutils literal notranslate"><span class="pre">opencv-python</span></code>) is required for the <code class="docutils literal notranslate"><span class="pre">cv2.xfeatures2d.VGG_create</span></code> descriptor.</p>
+</div></blockquote>
+</section>
+<section id="Step-1:-Setup">
+<h2>Step 1: Setup<a class="headerlink" href="#Step-1:-Setup" title="Link to this heading">¶</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
+
+<span class="kn">import</span> <span class="nn">cv2</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">imageio.v2</span> <span class="k">as</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">tifffile</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">skimage.color</span> <span class="kn">import</span> <span class="n">rgb2hed</span><span class="p">,</span> <span class="n">rgb2gray</span>
+<span class="kn">from</span> <span class="nn">skimage.measure</span> <span class="kn">import</span> <span class="n">block_reduce</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="kn">import</span> <span class="n">distance</span>
+<span class="kn">from</span> <span class="nn">statistics</span> <span class="kn">import</span> <span class="n">mean</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- Utility Functions ---</span>
+
+<span class="k">def</span> <span class="nf">convert_im_to_8bit</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">percentile_thresh</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">min_correct</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert an image to 8-bit.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    im : np.ndarray</span>
+<span class="sd">        Input image of any bit depth.</span>
+<span class="sd">    percentile_thresh : int</span>
+<span class="sd">        Percentile of max value to use as the output max (default: 100).</span>
+<span class="sd">    min_correct : bool</span>
+<span class="sd">        If True, sets the minimum non-zero value to zero.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Image converted to uint8.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">max_val_8bit</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">iinfo</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span><span class="o">.</span><span class="n">max</span>
+    <span class="n">max_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">percentile_thresh</span><span class="p">)</span>
+    <span class="n">min_val</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">if</span> <span class="n">min_correct</span><span class="p">:</span>
+        <span class="n">min_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">im</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">im</span><span class="p">)])</span>
+
+    <span class="n">im</span> <span class="o">=</span> <span class="n">im</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">im</span><span class="p">[</span><span class="n">im</span> <span class="o">&gt;</span> <span class="n">max_val</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_val</span>
+    <span class="n">im</span><span class="p">[</span><span class="n">im</span> <span class="o">&lt;</span> <span class="n">min_val</span><span class="p">]</span> <span class="o">=</span> <span class="n">min_val</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(((</span><span class="n">im</span> <span class="o">-</span> <span class="n">min_val</span><span class="p">)</span> <span class="o">/</span> <span class="n">max_val</span><span class="p">)</span> <span class="o">*</span> <span class="n">max_val_8bit</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;uint8&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">filter_features</span><span class="p">(</span><span class="n">kp</span><span class="p">,</span> <span class="n">desc</span><span class="p">,</span> <span class="n">n_keep</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Keep the keypoints with the highest response.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    kp : list</span>
+<span class="sd">        List of cv2.KeyPoint objects.</span>
+<span class="sd">    desc : np.ndarray</span>
+<span class="sd">        2D array of keypoint descriptors (rows = keypoints, cols = features).</span>
+<span class="sd">    n_keep : int</span>
+<span class="sd">        Maximum number of keypoints to retain.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple</span>
+<span class="sd">        Filtered (keypoints, descriptors).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="o">.</span><span class="n">response</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">kp</span><span class="p">])</span>
+    <span class="n">keep_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">response</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="n">n_keep</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">kp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">keep_idx</span><span class="p">],</span> <span class="n">desc</span><span class="p">[</span><span class="n">keep_idx</span><span class="p">,</span> <span class="p">:]</span>
+
+
+<span class="k">def</span> <span class="nf">convert_to_single_channel</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;grayscale&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert an RGB image to single channel.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    image : np.ndarray</span>
+<span class="sd">        Input image (RGB or grayscale).</span>
+<span class="sd">    algorithm : str</span>
+<span class="sd">        Conversion method: &#39;grayscale&#39;, &#39;deconvolved_hematoxylin&#39;,</span>
+<span class="sd">        &#39;rgb_ch0&#39;, &#39;rgb_ch1&#39;, or &#39;rgb_ch2&#39;.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Single-channel uint8 image.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s1">&#39;deconvolved_hematoxylin&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">convert_im_to_8bit</span><span class="p">(</span><span class="n">rgb2hed</span><span class="p">(</span><span class="n">image</span><span class="p">)[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">algorithm</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;rgb_ch0&#39;</span><span class="p">,</span> <span class="s1">&#39;rgb_ch1&#39;</span><span class="p">,</span> <span class="s1">&#39;rgb_ch2&#39;</span><span class="p">):</span>
+            <span class="n">ch</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">algorithm</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">return</span> <span class="mi">255</span> <span class="o">-</span> <span class="n">convert_im_to_8bit</span><span class="p">(</span><span class="n">image</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">ch</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># grayscale</span>
+            <span class="k">return</span> <span class="mi">255</span> <span class="o">-</span> <span class="n">convert_im_to_8bit</span><span class="p">(</span><span class="n">rgb2gray</span><span class="p">(</span><span class="n">image</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">block_reduce_image</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">scale_factor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Downscale an image by averaging blocks.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    image : np.ndarray</span>
+<span class="sd">        Input image.</span>
+<span class="sd">    scale_factor : int</span>
+<span class="sd">        Block size for downscaling.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Downscaled image.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">block_reduce</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">block_size</span><span class="o">=</span><span class="p">(</span><span class="n">scale_factor</span><span class="p">,</span> <span class="n">scale_factor</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">func</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">block_reduce</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">block_size</span><span class="o">=</span><span class="p">(</span><span class="n">scale_factor</span><span class="p">,</span> <span class="n">scale_factor</span><span class="p">),</span> <span class="n">func</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">check_alignment_pass</span><span class="p">(</span><span class="n">inliers</span><span class="p">,</span> <span class="n">transform_mat</span><span class="p">,</span> <span class="n">dst_inliers</span><span class="p">,</span> <span class="n">src_inliers</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check whether the alignment looks valid.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    inliers : np.ndarray</span>
+<span class="sd">        Boolean array indicating which keypoints are inliers.</span>
+<span class="sd">    transform_mat : np.ndarray</span>
+<span class="sd">        Transformation matrix.</span>
+<span class="sd">    dst_inliers : np.ndarray</span>
+<span class="sd">        Target image inlier keypoints.</span>
+<span class="sd">    src_inliers : np.ndarray</span>
+<span class="sd">        Moving image inlier keypoints.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    bool</span>
+<span class="sd">        True if alignment passes all checks.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pass_alignment</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">inliers</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">7</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;WARNING: Few matching keypoints — potential bad fit&#39;</span><span class="p">)</span>
+        <span class="n">pass_alignment</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">transform_mat</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mf">0.001</span> <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">transform_mat</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mf">0.001</span> <span class="ow">and</span>
+            <span class="nb">abs</span><span class="p">(</span><span class="n">transform_mat</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mf">0.001</span> <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">transform_mat</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mf">0.001</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;WARNING: Potential trivial solution — transformation matrix close to 0&#39;</span><span class="p">)</span>
+        <span class="n">pass_alignment</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">if</span> <span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dst_inliers</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dst_inliers</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]))</span> <span class="o">&lt;</span> <span class="mi">50</span> <span class="ow">and</span>
+            <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dst_inliers</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dst_inliers</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]))</span> <span class="o">&lt;</span> <span class="mi">50</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;WARNING: Potential trivial solution — destination points all similar&#39;</span><span class="p">)</span>
+        <span class="n">pass_alignment</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">if</span> <span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">src_inliers</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">src_inliers</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]))</span> <span class="o">&lt;</span> <span class="mi">10</span> <span class="ow">and</span>
+            <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">src_inliers</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">src_inliers</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]))</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;WARNING: Potential trivial solution — source points all similar&#39;</span><span class="p">)</span>
+        <span class="n">pass_alignment</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">return</span> <span class="n">pass_alignment</span>
+
+
+<span class="k">def</span> <span class="nf">get_alignment_transform</span><span class="p">(</span><span class="n">im_moving</span><span class="p">,</span> <span class="n">im_target</span><span class="p">,</span>
+                            <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_num_keypoints</span><span class="o">=</span><span class="mi">2</span><span class="o">**</span><span class="mi">18</span><span class="p">,</span>
+                            <span class="n">ratio_threshold</span><span class="o">=</span><span class="mf">0.85</span><span class="p">,</span> <span class="n">ransac_reproj_threshold</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+                            <span class="n">min_feature_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                            <span class="n">find_transform_func</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">estimateAffinePartial2D</span><span class="p">,</span>
+                            <span class="n">kp_detector</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kp_descriptor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                            <span class="n">im_moving_offset</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">im_target_offset</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find the transformation matrix between two images using feature matching.</span>
+
+<span class="sd">    Uses BRISK keypoint detection + VGG descriptors by default, with brute-force</span>
+<span class="sd">    matching and RANSAC-based transformation estimation.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    im_moving : np.ndarray</span>
+<span class="sd">        Moving image (will be transformed).</span>
+<span class="sd">    im_target : np.ndarray</span>
+<span class="sd">        Target image (reference).</span>
+<span class="sd">    verbose : bool</span>
+<span class="sd">        If True, display keypoint matches.</span>
+<span class="sd">    max_num_keypoints : int</span>
+<span class="sd">        Maximum number of keypoints to use.</span>
+<span class="sd">    ratio_threshold : float</span>
+<span class="sd">        Lowe&#39;s ratio test threshold (higher = less strict matching).</span>
+<span class="sd">    ransac_reproj_threshold : float</span>
+<span class="sd">        RANSAC reprojection threshold (higher = more tolerant of distortion).</span>
+<span class="sd">    min_feature_size : float</span>
+<span class="sd">        Minimum keypoint size to retain.</span>
+<span class="sd">    find_transform_func : callable</span>
+<span class="sd">        OpenCV function for estimating the transform (e.g., cv2.estimateAffinePartial2D).</span>
+<span class="sd">    kp_detector : cv2.Feature2D or None</span>
+<span class="sd">        Keypoint detector. Defaults to BRISK.</span>
+<span class="sd">    kp_descriptor : cv2.Feature2D or None</span>
+<span class="sd">        Keypoint descriptor. Defaults to VGG.</span>
+<span class="sd">    im_moving_offset : tuple</span>
+<span class="sd">        (x, y) offset for moving image keypoints (for ROI correction).</span>
+<span class="sd">    im_target_offset : tuple</span>
+<span class="sd">        (x, y) offset for target image keypoints.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    H : np.ndarray or list</span>
+<span class="sd">        Transformation matrix. Empty list if alignment fails.</span>
+<span class="sd">    pass_alignment : bool</span>
+<span class="sd">        Whether the alignment passed quality checks.</span>
+<span class="sd">    stats : dict</span>
+<span class="sd">        Alignment statistics.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">kp_detector</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">kp_detector</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">BRISK_create</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">kp_descriptor</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">kp_descriptor</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">xfeatures2d</span><span class="o">.</span><span class="n">VGG_create</span><span class="p">(</span><span class="n">scale_factor</span><span class="o">=</span><span class="mf">5.0</span><span class="p">)</span>
+
+    <span class="n">stats</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># Detect keypoints</span>
+    <span class="n">detected_kp</span> <span class="o">=</span> <span class="n">kp_detector</span><span class="o">.</span><span class="n">detect</span><span class="p">(</span><span class="n">im_moving</span><span class="p">)</span>
+    <span class="n">kp1</span><span class="p">,</span> <span class="n">des1</span> <span class="o">=</span> <span class="n">kp_descriptor</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">im_moving</span><span class="p">,</span> <span class="n">detected_kp</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Keypoints detected in moving image: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">kp1</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;keypoints_moving&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">kp1</span><span class="p">)</span>
+
+    <span class="n">detected_kp</span> <span class="o">=</span> <span class="n">kp_detector</span><span class="o">.</span><span class="n">detect</span><span class="p">(</span><span class="n">im_target</span><span class="p">)</span>
+    <span class="n">kp2</span><span class="p">,</span> <span class="n">des2</span> <span class="o">=</span> <span class="n">kp_descriptor</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">im_target</span><span class="p">,</span> <span class="n">detected_kp</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Keypoints detected in target image: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">kp2</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;keypoints_target&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">kp2</span><span class="p">)</span>
+
+    <span class="c1"># Filter by minimum feature size</span>
+    <span class="n">sizes1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">kp</span><span class="o">.</span><span class="n">size</span> <span class="k">for</span> <span class="n">kp</span> <span class="ow">in</span> <span class="n">kp1</span><span class="p">])</span>
+    <span class="n">mask1</span> <span class="o">=</span> <span class="n">sizes1</span> <span class="o">&gt;</span> <span class="n">min_feature_size</span>
+    <span class="n">kp1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">kp1</span><span class="p">)[</span><span class="n">mask1</span><span class="p">]</span>
+    <span class="n">des1</span> <span class="o">=</span> <span class="n">des1</span><span class="p">[</span><span class="n">mask1</span><span class="p">]</span>
+
+    <span class="n">sizes2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">kp</span><span class="o">.</span><span class="n">size</span> <span class="k">for</span> <span class="n">kp</span> <span class="ow">in</span> <span class="n">kp2</span><span class="p">])</span>
+    <span class="n">mask2</span> <span class="o">=</span> <span class="n">sizes2</span> <span class="o">&gt;</span> <span class="n">min_feature_size</span>
+    <span class="n">kp2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">kp2</span><span class="p">)[</span><span class="n">mask2</span><span class="p">]</span>
+    <span class="n">des2</span> <span class="o">=</span> <span class="n">des2</span><span class="p">[</span><span class="n">mask2</span><span class="p">]</span>
+
+    <span class="c1"># Keep top keypoints by response</span>
+    <span class="n">kp1</span><span class="p">,</span> <span class="n">des1</span> <span class="o">=</span> <span class="n">filter_features</span><span class="p">(</span><span class="n">kp1</span><span class="p">,</span> <span class="n">des1</span><span class="p">,</span> <span class="n">max_num_keypoints</span><span class="p">)</span>
+    <span class="n">kp2</span><span class="p">,</span> <span class="n">des2</span> <span class="o">=</span> <span class="n">filter_features</span><span class="p">(</span><span class="n">kp2</span><span class="p">,</span> <span class="n">des2</span><span class="p">,</span> <span class="n">max_num_keypoints</span><span class="p">)</span>
+
+    <span class="c1"># Match descriptors</span>
+    <span class="n">bf</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">BFMatcher</span><span class="p">()</span>
+    <span class="n">matches</span> <span class="o">=</span> <span class="n">bf</span><span class="o">.</span><span class="n">knnMatch</span><span class="p">(</span><span class="n">des1</span><span class="p">,</span> <span class="n">des2</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="c1"># Lowe&#39;s ratio test</span>
+    <span class="n">good</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">matches</span> <span class="k">if</span> <span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">distance</span> <span class="o">&lt;</span> <span class="n">ratio_threshold</span> <span class="o">*</span> <span class="n">m</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">distance</span><span class="p">]</span>
+    <span class="n">matches</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">good</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Keypoint matches after ratio test: </span><span class="si">{</span><span class="n">matches</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;matches&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">matches</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># Compute transformation using RANSAC</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">matches</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;WARNING: Not enough keypoints to perform alignment&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[],</span> <span class="kc">False</span><span class="p">,</span> <span class="n">stats</span>
+
+    <span class="n">src</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">([</span><span class="n">kp1</span><span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">queryIdx</span><span class="p">]</span><span class="o">.</span><span class="n">pt</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">dst</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">([</span><span class="n">kp2</span><span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">trainIdx</span><span class="p">]</span><span class="o">.</span><span class="n">pt</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">src</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">+=</span> <span class="n">im_moving_offset</span>
+        <span class="n">dst</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">+=</span> <span class="n">im_target_offset</span>
+
+    <span class="n">H</span><span class="p">,</span> <span class="n">inliers</span> <span class="o">=</span> <span class="n">find_transform_func</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">RANSAC</span><span class="p">,</span>
+                                     <span class="n">ransacReprojThreshold</span><span class="o">=</span><span class="n">ransac_reproj_threshold</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Inliers used for alignment: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">inliers</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;inliers&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">inliers</span><span class="p">))</span>
+    <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;transformation_matrix&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">H</span>
+
+    <span class="n">src_inliers</span> <span class="o">=</span> <span class="n">src</span><span class="p">[</span><span class="n">inliers</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">dst_inliers</span> <span class="o">=</span> <span class="n">dst</span><span class="p">[</span><span class="n">inliers</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">pass_alignment</span> <span class="o">=</span> <span class="n">check_alignment_pass</span><span class="p">(</span><span class="n">inliers</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">dst_inliers</span><span class="p">,</span> <span class="n">src_inliers</span><span class="p">)</span>
+    <span class="n">stats</span><span class="p">[</span><span class="s1">&#39;pass_alignment&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pass_alignment</span>
+
+    <span class="c1"># Plot keypoint matches</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="n">f</span><span class="p">,</span> <span class="n">axarr</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+        <span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Moving Image — Inlier Keypoints&#39;</span><span class="p">)</span>
+        <span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im_moving</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+        <span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">src_inliers</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="n">src_inliers</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+        <span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Target Image — Inlier Keypoints&#39;</span><span class="p">)</span>
+        <span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im_target</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+        <span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">dst_inliers</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="n">dst_inliers</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">H</span><span class="p">,</span> <span class="n">pass_alignment</span><span class="p">,</span> <span class="n">stats</span>
+
+
+<span class="k">def</span> <span class="nf">scale_transformation_matrix</span><span class="p">(</span><span class="n">transform_matrix</span><span class="p">,</span> <span class="n">scale_moving</span><span class="p">,</span> <span class="n">scale_target</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Scale a 2x3 transformation matrix to account for image downscaling.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    transform_matrix : np.ndarray</span>
+<span class="sd">        2x3 affine transformation matrix.</span>
+<span class="sd">    scale_moving : float</span>
+<span class="sd">        Scale factor applied to the moving image.</span>
+<span class="sd">    scale_target : float</span>
+<span class="sd">        Scale factor applied to the target image.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    np.ndarray</span>
+<span class="sd">        Scaled 2x3 transformation matrix for full-resolution images.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mat_3x3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">transform_matrix</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])])</span>
+    <span class="n">scale_moving_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span> <span class="o">/</span> <span class="n">scale_moving</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                                 <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">scale_moving</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                                 <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+    <span class="n">scale_target_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">scale_target</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                                 <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale_target</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                                 <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">scale_target</span><span class="p">]])</span>
+    <span class="n">scaled</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">mat_3x3</span><span class="p">,</span> <span class="n">scale_target_mat</span><span class="p">)</span>
+    <span class="n">scaled</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">scaled</span><span class="p">,</span> <span class="n">scale_moving_mat</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">scaled</span><span class="p">[:</span><span class="mi">2</span><span class="p">,</span> <span class="p">:]</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Step-2:-User-Inputs">
+<h2>Step 2: User Inputs<a class="headerlink" href="#Step-2:-User-Inputs" title="Link to this heading">¶</a></h2>
+<p>Configure the paths and parameters for your alignment. Update the file paths below to point to your images.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- File Paths ---</span>
+<span class="n">im_target_path</span> <span class="o">=</span> <span class="s1">&#39;../HCC/hi_res_codex_img/071-2.ome.tif&#39;</span>   <span class="c1"># Target (reference) image</span>
+<span class="n">im_moving_path</span> <span class="o">=</span> <span class="s1">&#39;../HCC/visium/cytassist_73_post/spatial/cytassist_image.tiff&#39;</span>  <span class="c1"># Moving image (to be aligned)</span>
+
+<span class="c1"># (Optional) Visium spot coordinate files</span>
+<span class="n">input_visium_coords_path</span> <span class="o">=</span> <span class="s1">&#39;../HCC/visium/cytassist_73_post/spatial/tissue_positions_list.csv&#39;</span>
+<span class="n">output_visium_coords_path</span> <span class="o">=</span> <span class="s1">&#39;../HCC/transformed_visium_loc/073_4_tissue_positions_list.csv&#39;</span>
+
+<span class="c1"># --- Image Parameters ---</span>
+<span class="n">scale_factor_target</span> <span class="o">=</span> <span class="mi">15</span>   <span class="c1"># Downscale factor for target image</span>
+<span class="n">scale_factor_moving</span> <span class="o">=</span> <span class="mi">1</span>    <span class="c1"># Downscale factor for moving image</span>
+<span class="n">flip_moving_image</span> <span class="o">=</span> <span class="kc">True</span>   <span class="c1"># Set True if images are mirrored</span>
+
+<span class="c1"># --- Transform Type ---</span>
+<span class="n">find_transform_func</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">estimateAffinePartial2D</span>  <span class="c1"># or cv2.findHomography</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Step-3:-Load-and-Preprocess-Images">
+<h2>Step 3: Load and Preprocess Images<a class="headerlink" href="#Step-3:-Load-and-Preprocess-Images" title="Link to this heading">¶</a></h2>
+<p>Load the target and moving images, apply optional mirroring, and downscale for faster keypoint detection. The downscaled images are used for alignment; the full-resolution images are transformed later.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load images</span>
+<span class="n">im_target_full_res</span> <span class="o">=</span> <span class="n">tifffile</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">im_target_path</span><span class="p">)</span>
+<span class="n">im_target_full_res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">im_target_full_res</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Sum across channels for multi-channel TIFFs</span>
+
+<span class="n">im_moving_full_res</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">im_moving_path</span><span class="p">)</span>
+
+<span class="c1"># Fix channel-first layout if needed</span>
+<span class="k">if</span> <span class="n">im_target_full_res</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+    <span class="n">im_target_full_res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">moveaxis</span><span class="p">(</span><span class="n">im_target_full_res</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">im_moving_full_res</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+    <span class="n">im_moving_full_res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">moveaxis</span><span class="p">(</span><span class="n">im_moving_full_res</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Flip moving image if mirrored</span>
+<span class="k">if</span> <span class="n">flip_moving_image</span><span class="p">:</span>
+    <span class="n">im_moving_full_res</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">im_moving_full_res</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Downscale</span>
+<span class="n">im_target</span> <span class="o">=</span> <span class="n">block_reduce_image</span><span class="p">(</span><span class="n">im_target_full_res</span><span class="p">,</span> <span class="n">scale_factor_target</span><span class="p">)</span>
+<span class="n">im_moving</span> <span class="o">=</span> <span class="n">block_reduce_image</span><span class="p">(</span><span class="n">im_moving_full_res</span><span class="p">,</span> <span class="n">scale_factor_moving</span><span class="p">)</span>
+
+<span class="c1"># Convert to 8-bit</span>
+<span class="n">im_target</span> <span class="o">=</span> <span class="n">convert_im_to_8bit</span><span class="p">(</span><span class="n">im_target</span><span class="p">)</span>
+<span class="n">im_moving</span> <span class="o">=</span> <span class="n">convert_im_to_8bit</span><span class="p">(</span><span class="n">im_moving</span><span class="p">)</span>
+<span class="n">im_target_full_res</span> <span class="o">=</span> <span class="n">convert_im_to_8bit</span><span class="p">(</span><span class="n">im_target_full_res</span><span class="p">)</span>
+<span class="n">im_moving_full_res</span> <span class="o">=</span> <span class="n">convert_im_to_8bit</span><span class="p">(</span><span class="n">im_moving_full_res</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Moving image shape: </span><span class="si">{</span><span class="n">im_moving</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Target image shape: </span><span class="si">{</span><span class="n">im_target</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">f</span><span class="p">,</span> <span class="n">axarr</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Moving Image&#39;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im_moving</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Target Image&#39;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im_target</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Step-4:-(Optional)-Select-Region-of-Interest">
+<h2>Step 4: (Optional) Select Region of Interest<a class="headerlink" href="#Step-4:-(Optional)-Select-Region-of-Interest" title="Link to this heading">¶</a></h2>
+<p>If the moving image contains a large background area, cropping to the tissue region improves alignment. Set the ROI coordinates below, or set <code class="docutils literal notranslate"><span class="pre">use_roi</span> <span class="pre">=</span> <span class="pre">False</span></code> to skip.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">use_roi</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="c1"># ROI coordinates (y_min, y_max, x_min, x_max) — adjust based on your image</span>
+<span class="n">roi_y_min</span><span class="p">,</span> <span class="n">roi_y_max</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">im_moving</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">roi_x_min</span><span class="p">,</span> <span class="n">roi_x_max</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">im_moving</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="k">if</span> <span class="n">use_roi</span><span class="p">:</span>
+    <span class="n">im_moving</span> <span class="o">=</span> <span class="n">im_moving</span><span class="p">[</span><span class="n">roi_y_min</span><span class="p">:</span><span class="n">roi_y_max</span><span class="p">,</span> <span class="n">roi_x_min</span><span class="p">:</span><span class="n">roi_x_max</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Cropped moving image shape: </span><span class="si">{</span><span class="n">im_moving</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="n">f</span><span class="p">,</span> <span class="n">axarr</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Moving Image (Cropped)&#39;</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im_moving</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Target Image&#39;</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im_target</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Step-5:-Convert-to-Single-Channel">
+<h2>Step 5: Convert to Single Channel<a class="headerlink" href="#Step-5:-Convert-to-Single-Channel" title="Link to this heading">¶</a></h2>
+<p>Convert each image to a single-channel representation for feature detection. Both images should have similar appearance after conversion (both dark-on-light or both light-on-dark).</p>
+<p><strong>Options:</strong> <code class="docutils literal notranslate"><span class="pre">'grayscale'</span></code>, <code class="docutils literal notranslate"><span class="pre">'deconvolved_hematoxylin'</span></code> (for H&amp;E), <code class="docutils literal notranslate"><span class="pre">'rgb_ch0'</span></code>, <code class="docutils literal notranslate"><span class="pre">'rgb_ch1'</span></code>, <code class="docutils literal notranslate"><span class="pre">'rgb_ch2'</span></code></p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">single_channel_algorithm_moving</span> <span class="o">=</span> <span class="s1">&#39;grayscale&#39;</span>
+<span class="n">single_channel_algorithm_target</span> <span class="o">=</span> <span class="s1">&#39;grayscale&#39;</span>
+
+<span class="n">im_moving_sc</span> <span class="o">=</span> <span class="n">convert_to_single_channel</span><span class="p">(</span><span class="n">im_moving</span><span class="p">,</span> <span class="n">single_channel_algorithm_moving</span><span class="p">)</span>
+<span class="n">im_target_sc</span> <span class="o">=</span> <span class="n">convert_to_single_channel</span><span class="p">(</span><span class="n">im_target</span><span class="p">,</span> <span class="n">single_channel_algorithm_target</span><span class="p">)</span>
+
+<span class="n">f</span><span class="p">,</span> <span class="n">axarr</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Moving Image — Single Channel&#39;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im_moving_sc</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Target Image — Single Channel&#39;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im_target_sc</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Step-6:-Contrast-Enhancement">
+<h2>Step 6: Contrast Enhancement<a class="headerlink" href="#Step-6:-Contrast-Enhancement" title="Link to this heading">¶</a></h2>
+<p>Apply Contrast Limited Adaptive Histogram Equalization (CLAHE) to improve feature detection. Increase <code class="docutils literal notranslate"><span class="pre">clip_limit</span></code> for brighter images; decrease if images appear washed out.</p>
+<p><strong>Goal:</strong> Both images should look similar in intensity and contrast after enhancement.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">clahe_clip_limit_moving</span> <span class="o">=</span> <span class="mi">1</span>    <span class="c1"># Increase for brighter output</span>
+<span class="n">clahe_clip_limit_target</span> <span class="o">=</span> <span class="mi">20</span>   <span class="c1"># Increase for brighter output</span>
+
+<span class="n">clahe_moving</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">createCLAHE</span><span class="p">(</span><span class="n">clipLimit</span><span class="o">=</span><span class="n">clahe_clip_limit_moving</span><span class="p">)</span>
+<span class="n">clahe_target</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">createCLAHE</span><span class="p">(</span><span class="n">clipLimit</span><span class="o">=</span><span class="n">clahe_clip_limit_target</span><span class="p">)</span>
+
+<span class="n">im_moving_contrast</span> <span class="o">=</span> <span class="n">convert_im_to_8bit</span><span class="p">(</span><span class="n">clahe_moving</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">im_moving_sc</span><span class="p">))</span>
+<span class="n">im_target_contrast</span> <span class="o">=</span> <span class="n">convert_im_to_8bit</span><span class="p">(</span><span class="n">clahe_target</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">im_target_sc</span><span class="p">))</span>
+<span class="n">im_target_full_res_contrast</span> <span class="o">=</span> <span class="n">convert_im_to_8bit</span><span class="p">(</span><span class="n">clahe_target</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">im_target_full_res</span><span class="p">))</span>
+
+<span class="n">f</span><span class="p">,</span> <span class="n">axarr</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Moving Image — Contrast Enhanced&#39;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im_moving_contrast</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Target Image — Contrast Enhanced&#39;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im_target_contrast</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Step-7:-Feature-Detection-and-Alignment">
+<h2>Step 7: Feature Detection and Alignment<a class="headerlink" href="#Step-7:-Feature-Detection-and-Alignment" title="Link to this heading">¶</a></h2>
+<p>Detect BRISK keypoints, compute VGG descriptors, match features between images, and estimate the transformation matrix using RANSAC.</p>
+<p><strong>Key parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ratio_threshold</span></code>: Lowe’s ratio test threshold (0.0–1.0). Higher values accept more matches but may include false positives. Increase if images differ significantly in staining.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ransac_reproj_threshold</span></code>: RANSAC reprojection tolerance. Higher values tolerate more tissue distortion between slices.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">min_feature_size</span></code>: Minimum keypoint size to retain. Increase to ignore small/noisy features.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">max_num_keypoints</span></code>: Cap on the number of keypoints (to avoid memory issues with very large images).</p></li>
+</ul>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ratio_threshold</span> <span class="o">=</span> <span class="mf">0.9</span>
+<span class="n">ransac_reproj_threshold</span> <span class="o">=</span> <span class="mf">20.0</span>
+<span class="n">min_feature_size</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">max_num_keypoints</span> <span class="o">=</span> <span class="mi">20000</span>
+
+<span class="n">transformation_matrix</span><span class="p">,</span> <span class="n">pass_alignment</span><span class="p">,</span> <span class="n">alignment_stats</span> <span class="o">=</span> <span class="n">get_alignment_transform</span><span class="p">(</span>
+    <span class="n">im_moving_contrast</span><span class="p">,</span> <span class="n">im_target_contrast</span><span class="p">,</span>
+    <span class="n">max_num_keypoints</span><span class="o">=</span><span class="n">max_num_keypoints</span><span class="p">,</span>
+    <span class="n">ratio_threshold</span><span class="o">=</span><span class="n">ratio_threshold</span><span class="p">,</span>
+    <span class="n">ransac_reproj_threshold</span><span class="o">=</span><span class="n">ransac_reproj_threshold</span><span class="p">,</span>
+    <span class="n">min_feature_size</span><span class="o">=</span><span class="n">min_feature_size</span><span class="p">,</span>
+    <span class="n">find_transform_func</span><span class="o">=</span><span class="n">find_transform_func</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">pass_alignment</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Transformation matrix:</span><span class="se">\n</span><span class="si">{</span><span class="n">transformation_matrix</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Alignment failed. Try adjusting the single-channel conversion or contrast enhancement parameters.&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Step-8:-Display-Aligned-Images">
+<h2>Step 8: Display Aligned Images<a class="headerlink" href="#Step-8:-Display-Aligned-Images" title="Link to this heading">¶</a></h2>
+<p>Apply the transformation to the moving image and overlay with the target to verify alignment quality.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">pass_alignment</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">find_transform_func</span> <span class="o">==</span> <span class="n">cv2</span><span class="o">.</span><span class="n">findHomography</span><span class="p">:</span>
+        <span class="n">im_moving_aligned</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">warpPerspective</span><span class="p">(</span>
+            <span class="n">im_moving</span><span class="p">,</span> <span class="n">transformation_matrix</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">im_target</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">im_target</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">im_moving_aligned</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">warpAffine</span><span class="p">(</span>
+            <span class="n">im_moving</span><span class="p">,</span> <span class="n">transformation_matrix</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">im_target</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">im_target</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+
+    <span class="n">f</span><span class="p">,</span> <span class="n">axarr</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Original Moving Image&#39;</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im_moving</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Transformed Moving Image&#39;</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im_moving_aligned</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Target Image&#39;</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im_target_contrast</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Overlay&#39;</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im_moving_aligned</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im_target_contrast</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Alignment failed. See Step 7 output for details.&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Step-9:-Full-Resolution-Alignment">
+<h2>Step 9: Full-Resolution Alignment<a class="headerlink" href="#Step-9:-Full-Resolution-Alignment" title="Link to this heading">¶</a></h2>
+<p>Re-run feature detection with ROI offset correction, then scale the transformation matrix back to full-resolution coordinates. This produces the final aligned image at the original resolution.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Re-compute transform with ROI offset</span>
+<span class="n">moving_offset</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="k">if</span> <span class="n">use_roi</span><span class="p">:</span>
+    <span class="n">moving_offset</span> <span class="o">=</span> <span class="p">[</span><span class="n">roi_x_min</span><span class="p">,</span> <span class="n">roi_y_min</span><span class="p">]</span>
+
+<span class="n">transformation_matrix_scaled</span><span class="p">,</span> <span class="n">pass_alignment</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">get_alignment_transform</span><span class="p">(</span>
+    <span class="n">im_moving_contrast</span><span class="p">,</span> <span class="n">im_target_contrast</span><span class="p">,</span>
+    <span class="n">max_num_keypoints</span><span class="o">=</span><span class="n">max_num_keypoints</span><span class="p">,</span>
+    <span class="n">ratio_threshold</span><span class="o">=</span><span class="n">ratio_threshold</span><span class="p">,</span>
+    <span class="n">ransac_reproj_threshold</span><span class="o">=</span><span class="n">ransac_reproj_threshold</span><span class="p">,</span>
+    <span class="n">min_feature_size</span><span class="o">=</span><span class="n">min_feature_size</span><span class="p">,</span>
+    <span class="n">find_transform_func</span><span class="o">=</span><span class="n">find_transform_func</span><span class="p">,</span>
+    <span class="n">im_moving_offset</span><span class="o">=</span><span class="n">moving_offset</span><span class="p">)</span>
+
+<span class="c1"># Scale to full resolution</span>
+<span class="n">transformation_matrix_full_res</span> <span class="o">=</span> <span class="n">scale_transformation_matrix</span><span class="p">(</span>
+    <span class="n">transformation_matrix_scaled</span><span class="p">,</span> <span class="n">scale_factor_moving</span><span class="p">,</span> <span class="n">scale_factor_target</span><span class="p">)</span>
+
+<span class="c1"># Apply to full-resolution moving image</span>
+<span class="n">im_moving_aligned_full_res</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">warpAffine</span><span class="p">(</span>
+    <span class="n">im_moving_full_res</span><span class="p">,</span> <span class="n">transformation_matrix_full_res</span><span class="p">,</span>
+    <span class="p">(</span><span class="n">im_target_full_res</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">im_target_full_res</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+
+<span class="c1"># Display</span>
+<span class="n">f</span><span class="p">,</span> <span class="n">axarr</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Original Moving Image (Full Res)&#39;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im_moving_full_res</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Transformed Moving Image (Full Res)&#39;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im_moving_aligned_full_res</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Target Image (Full Res)&#39;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im_target_full_res_contrast</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Overlay (Full Res)&#39;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im_moving_aligned_full_res</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im_target_full_res_contrast</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+<span class="n">f</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Step-10:-(Optional)-Transform-Visium-Spot-Coordinates">
+<h2>Step 10: (Optional) Transform Visium Spot Coordinates<a class="headerlink" href="#Step-10:-(Optional)-Transform-Visium-Spot-Coordinates" title="Link to this heading">¶</a></h2>
+<p>If aligning Visium spatial transcriptomics data, apply the same transformation to the spot coordinates so they match the target image coordinate system.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">tissue_to_image_scale</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">input_visium_coords_path</span><span class="p">)</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;transformed_coords_x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;transformed_coords_y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+    <span class="n">pt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+        <span class="n">row</span><span class="p">[</span><span class="s1">&#39;pxl_col_in_fullres&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">tissue_to_image_scale</span><span class="p">,</span>
+        <span class="n">row</span><span class="p">[</span><span class="s1">&#39;pxl_row_in_fullres&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">tissue_to_image_scale</span><span class="p">,</span>
+        <span class="mf">1.0</span>
+    <span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">flip_moving_image</span><span class="p">:</span>
+        <span class="n">pt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">im_moving_full_res</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">pt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">transformed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">transformation_matrix_full_res</span><span class="p">,</span> <span class="n">pt</span><span class="p">)</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="s1">&#39;transformed_coords_x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">transformed</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="s1">&#39;transformed_coords_y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">transformed</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Transformed </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">}</span><span class="s1"> spot coordinates.&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Verify: overlay all spots on original and transformed images</span>
+<span class="n">f</span><span class="p">,</span> <span class="n">axarr</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+<span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">im_moving_path</span><span class="p">),</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+    <span class="n">x</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;pxl_col_in_fullres&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">tissue_to_image_scale</span><span class="p">,</span>
+    <span class="n">y</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;pxl_row_in_fullres&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">tissue_to_image_scale</span><span class="p">,</span>
+    <span class="n">c</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Original image with Visium spots&#39;</span><span class="p">)</span>
+
+<span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im_moving_aligned_full_res</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+    <span class="n">x</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;transformed_coords_x&#39;</span><span class="p">],</span>
+    <span class="n">y</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;transformed_coords_y&#39;</span><span class="p">],</span>
+    <span class="n">c</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">im_moving_aligned_full_res</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">im_moving_aligned_full_res</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+<span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Transformed image with Visium spots&#39;</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_visium_coords_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Saved transformed coordinates to </span><span class="si">{</span><span class="n">output_visium_coords_path</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="../api/index.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">API Reference</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="coral_tutorial.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">CORAL Tutorial — Multi-scale Multi-modal Integration of Spatial Omics</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2025, Siyu He
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Align Images from Different Slices Using SIFT</a><ul>
+<li><a class="reference internal" href="#Overview">Overview</a><ul>
+<li><a class="reference internal" href="#Method">Method</a></li>
+<li><a class="reference internal" href="#Pipeline">Pipeline</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#Prerequisites">Prerequisites</a></li>
+<li><a class="reference internal" href="#Step-1:-Setup">Step 1: Setup</a></li>
+<li><a class="reference internal" href="#Step-2:-User-Inputs">Step 2: User Inputs</a></li>
+<li><a class="reference internal" href="#Step-3:-Load-and-Preprocess-Images">Step 3: Load and Preprocess Images</a></li>
+<li><a class="reference internal" href="#Step-4:-(Optional)-Select-Region-of-Interest">Step 4: (Optional) Select Region of Interest</a></li>
+<li><a class="reference internal" href="#Step-5:-Convert-to-Single-Channel">Step 5: Convert to Single Channel</a></li>
+<li><a class="reference internal" href="#Step-6:-Contrast-Enhancement">Step 6: Contrast Enhancement</a></li>
+<li><a class="reference internal" href="#Step-7:-Feature-Detection-and-Alignment">Step 7: Feature Detection and Alignment</a></li>
+<li><a class="reference internal" href="#Step-8:-Display-Aligned-Images">Step 8: Display Aligned Images</a></li>
+<li><a class="reference internal" href="#Step-9:-Full-Resolution-Alignment">Step 9: Full-Resolution Alignment</a></li>
+<li><a class="reference internal" href="#Step-10:-(Optional)-Transform-Visium-Spot-Coordinates">Step 10: (Optional) Transform Visium Spot Coordinates</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    </body>
+</html>

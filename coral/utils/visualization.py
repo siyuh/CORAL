@@ -12,7 +12,7 @@ def plot_spatial(
     res: float = 0.1,
     size: float = 15,
     use_rep_for_cluster: str | None = None,
-    to_plot_var: str | None = None, 
+    to_plot_var: str | None = None,
     need_lognormed: bool | None = None,
     color_list: list[str] | None = None,
     figsize: tuple[float, float] = (4, 4),
@@ -23,8 +23,9 @@ def plot_spatial(
     bbox_to_anchor: tuple[float, float] = (1.01, 0.8),
     legend_fontsize: int = 10,
     legend_markerscale: float = 5,
-    return_cluster: bool = False, 
+    return_cluster: bool = False,
     n_neighbors: int = 100,
+    dpi: int = 150,
 ):
     """
     Plot spatial clusters from a spatial transcriptomics AnnData object.
@@ -101,7 +102,7 @@ def plot_spatial(
     ]
 
     # Create figure
-    fig, ax = plt.subplots(1, 1, figsize=figsize, dpi=500)
+    fig, ax = plt.subplots(1, 1, figsize=figsize, dpi=dpi)
 
     for j, cluster in enumerate(sorted(adata_.obs[to_plot_var].unique())):
         coords = adata_.obsm["spatial"][adata_.obs[to_plot_var] == cluster]
@@ -143,16 +144,16 @@ def plot_spatial(
         plt.show()
 
 
-def plot_latent_umap(adata, rep = 'X',to_plot_var = 'cluster',custom_palette = ['#f4f1de',  '#81b29a', '#f2cc8f', '#e07a5f','#3d405b',]):
+def plot_latent_umap(adata, rep = 'X',to_plot_var = 'cluster',custom_palette = ['#f4f1de',  '#81b29a', '#f2cc8f', '#e07a5f','#3d405b',], dpi=150):
 
     latent_rep = adata.obsm[rep]
     umap_model = UMAP(n_neighbors=30, min_dist=0.2, n_components=2, random_state=42)
-    
+
     # Fit the model to your data and transform it
     z_umap = umap_model.fit_transform(latent_rep)
-    adata.obsm['umap'] = z_umap 
+    adata.obsm['umap'] = z_umap
 
-    plt.figure(dpi=500,figsize=(3.4,3))
+    plt.figure(dpi=dpi,figsize=(3.4,3))
     sc.pl.embedding(adata, basis='umap', title='Coral', color=to_plot_var, s=70, show=False, palette=custom_palette)
     plt.xlabel('')
     plt.ylabel('')
@@ -162,7 +163,7 @@ def plot_umap(
     res: float = 0.1,
     size: float = 15,
     use_rep_for_cluster: str | None = None,
-    to_plot_var: str | None = None, 
+    to_plot_var: str | None = None,
     need_lognormed: bool | None = None,
     color_list: list[str] | None = None,
     figsize: tuple[float, float] = (4, 4),
@@ -174,7 +175,7 @@ def plot_umap(
     bbox_to_anchor: tuple[float, float] = (1.01, 0.8),
     legend_fontsize: int = 10,
     legend_markerscale: float = 5,
-
+    dpi: int = 150,
 ):
     """
     Plot spatial clusters from a spatial transcriptomics AnnData object.
@@ -255,7 +256,7 @@ def plot_umap(
     ]
     
     # Create figure
-    fig, ax = plt.subplots(1, 1, figsize=figsize, dpi=500)
+    fig, ax = plt.subplots(1, 1, figsize=figsize, dpi=dpi)
 
     sc.tl.umap(adata_,min_dist=0.5) 
     for j, cluster in enumerate(sorted(adata_.obs[to_plot_var].unique().astype(str))):
@@ -304,7 +305,7 @@ def plot_umap_gene(
     res: float = 0.1,
     size: float = 15,
     use_rep_for_cluster: str | None = None,
-    to_plot_gene: str | None = None, 
+    to_plot_gene: str | None = None,
     need_lognormed: bool | None = None,
     color_list: list[str] | None = None,
     figsize: tuple[float, float] = (4, 4),
@@ -316,8 +317,9 @@ def plot_umap_gene(
     bbox_to_anchor: tuple[float, float] = (1.01, 0.8),
     legend_fontsize: int = 10,
     legend_markerscale: float = 5,
-        vmin: float = 0,
+    vmin: float = 0,
     vmax: float | None = None,
+    dpi: int = 150,
 ):
     # Copy input to avoid modifying the original AnnData
     adata_ = adata.copy()
@@ -334,7 +336,7 @@ def plot_umap_gene(
         sc.pp.neighbors(adata_, n_neighbors=100)
 
     # Create figure
-    fig, ax = plt.subplots(1, 1, figsize=figsize, dpi=500)
+    fig, ax = plt.subplots(1, 1, figsize=figsize, dpi=dpi)
 
     sc.tl.umap(adata_,min_dist=0.5) 
     coords = adata_.obsm["X_umap"]
